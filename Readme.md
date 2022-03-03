@@ -16,13 +16,13 @@ getObjectMetadata
 putObject
 listObjects
 listObjectsV2
+listNextBatchOfObjects
 listVersions
 deleteObject
 deleteObjects
 copyObject
 setRegion
 generatePresignedUrl
-listNextBatchOfObjects
 ```
 
 
