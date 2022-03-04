@@ -1,7 +1,9 @@
+/*
+ * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
+ */
 package com.snowflake.s3compatapitestsuite.compatapi;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.MultiObjectDeleteException;
 import org.junit.jupiter.api.Assertions;
 
 public class TestUtils {

@@ -1,10 +1,8 @@
+/*
+ * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
+ */
 package com.snowflake.s3compatapitestsuite.compatapi;
 
-/**
- * Generate pre-signed URL for a file PUT, GET or DELETE operation.
- *
- * @author aravind.r
- */
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
