@@ -71,8 +71,21 @@ public class S3CompatStorageClient implements StorageClient {
     }
 
     @Override
-    public String getBucketLocation(String bucketName) throws AmazonS3Exception{
-        return this.s3Client.getBucketLocation(bucketName);
+    public String getBucketLocation(String bucketName) {
+        String regionRes;
+        try {
+            regionRes = this.s3Client.getBucketLocation(bucketName);
+        } catch (AmazonS3Exception ex) {
+            if (ex.getAdditionalDetails() != null) {
+                String correctRegion = ex.getAdditionalDetails().get("Region");
+                if (correctRegion != null) {
+                    this.s3Client.setRegion(Region.getRegion(Regions.fromName(correctRegion)));
+                    return this.s3Client.getBucketLocation(bucketName);
+                }
+            }
+            throw ex;
+        }
+        return regionRes;
     }
 
     @Override
@@ -376,6 +389,5 @@ public class S3CompatStorageClient implements StorageClient {
     public String getRegionName() {
         return this.s3Client.getRegionName();
     }
-
 
 }

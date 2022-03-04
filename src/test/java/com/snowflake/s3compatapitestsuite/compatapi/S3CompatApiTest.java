@@ -21,11 +21,13 @@ class S3CompatApiTest {
     private static S3CompatStorageClient clientWithRegion2;
     private static S3CompatStorageClient clientWithInvalidKeyId;
     private static S3CompatStorageClient clientWithInvalidSecret;
+    private static S3CompatStorageClient clientWithNoCredentials;
     private static AWSCredentialsProvider credentialsProvider;
     private static final String endPoint = "s3.amazonaws.com";
     private static final String region1 = "us-east-1";
     private static final String region2 = "us-west-2";
     private static final String nullRegion = null;
+    private static final String publicBucket = "scedc-pds";
     private static final String bucketAtRegion1 = "sfc-dev1";
     private static final String bucketAtRegion2 ="sfc-dev1-data";
     private static final String notExistingBucket = "sf-not-existing-bucket";
@@ -47,6 +49,7 @@ class S3CompatApiTest {
         clientWithNoRegionSpecified = new S3CompatStorageClient(credentialsProvider, nullRegion, endPoint);
         clientWithInvalidKeyId = new S3CompatStorageClient(new AWSStaticCredentialsProvider(wrongKeyId), region2, endPoint);
         clientWithInvalidSecret = new S3CompatStorageClient(new AWSStaticCredentialsProvider(wrongSecret), region2, endPoint);
+        clientWithNoCredentials = new S3CompatStorageClient(null, region2, endPoint);
     }
 
     @AfterAll
@@ -71,30 +74,32 @@ class S3CompatApiTest {
         startTest(TestUtils.OPERATIONS.GET_BUCKET_LOCATION);
         // positive tests:
         Assertions.assertEquals(region2, clientWithRegion2.getBucketLocation(bucketAtRegion2));
-        Assertions.assertEquals("US", clientWithRegion2.getBucketLocation(bucketAtRegion1));
+        Assertions.assertEquals(region2, clientWithNoRegionSpecified.getBucketLocation(bucketAtRegion2));
+        Assertions.assertEquals(region2, clientWithRegion1.getBucketLocation(bucketAtRegion2));
         // AWS returns "US" for the standard region in us-east-1
+        Assertions.assertEquals("US", clientWithRegion2.getBucketLocation(bucketAtRegion1));
         Assertions.assertEquals("US", clientWithRegion1.getBucketLocation(bucketAtRegion1));
         Assertions.assertEquals("US", clientWithNoRegionSpecified.getBucketLocation(bucketAtRegion1));
+        Assertions.assertEquals(region2, clientWithNoCredentials.getBucketLocation(publicBucket));
 
         // negative tests
-        TestUtils.functionCallThrowsException(() -> clientWithRegion1.getBucketLocation(bucketAtRegion2),
-                400 /* expectedStatusCode */,
-                "AuthorizationHeaderMalformed" /* expectedErrorCode */,
-                region2 /* expectedRegionFromExceptionMsg */);
-        TestUtils.functionCallThrowsException(() -> clientWithNoRegionSpecified.getBucketLocation(bucketAtRegion2),
-                400 /* expectedStatusCode */,
-                "AuthorizationHeaderMalformed" /* expectedErrorCode */ ,
-                region2 /* expectedRegionFromExceptionMsg */);
+        TestUtils.functionCallThrowsException(() -> clientWithNoRegionSpecified.getBucketLocation(notExistingBucket),
+                404 /* expectedStatusCode */,
+                "NoSuchBucket" /* expectedErrorCode */,
+                "The specified bucket does not exist" /* expectedErrorMsg */);
         TestUtils.functionCallThrowsException(() -> clientWithInvalidKeyId.getBucketLocation(bucketAtRegion2),
                 403 /* expectedStatusCode */,
                 "InvalidAccessKeyId" /* expectedErrorCode */,
-                null /* expectedRegionFromExceptionMsg */);
+                "The AWS Access Key Id you provided does not exist in our records." /* expectedErrorMsg */);
         TestUtils.functionCallThrowsException(() -> clientWithInvalidSecret.getBucketLocation(bucketAtRegion2),
                 403 /* expectedStatusCode */,
                 "SignatureDoesNotMatch" /* expectedErrorCode */,
-                null /* expectedRegionFromExceptionMsg */);
+                "The request signature we calculated does not match the signature you provided. Check your key and signing method." /* expectedErrorMsg */);
+        TestUtils.functionCallThrowsException(() -> clientWithNoCredentials.getBucketLocation(bucketAtRegion2),
+                403 /* expectedStatusCode */,
+                "AccessDenied" /* expectedErrorCode */,
+                "Access Denied");
     }
-
 
     @Test
     void getObject() throws Exception {
@@ -108,11 +113,22 @@ class S3CompatApiTest {
         Assertions.assertEquals(bucketAtRegion2, object.getBucketName());
         Assertions.assertEquals(filePath, object.getKey());
 
+        // Negative test: get a file does not exist
         TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObject(bucketAtRegion2, "notExisting" + filePath),
                 404 /* expectedStatusCode */,
                 "NoSuchKey" /* expectedErrorCode */,
-                null /* expectedRegionFromExceptionMsg */);
+                "The specified key does not exist." /* expectedErrorMsg */);
 
+        // Negative test: get a file at a wrong region
+        TestUtils.functionCallThrowsException(() -> clientWithRegion1.getObject(bucketAtRegion2, filePath),
+                400 /* expectedStatusCode */,
+                "AuthorizationHeaderMalformed" /* expectedErrorCode */,
+                "The authorization header is malformed; the region 'us-east-1' is wrong; expecting 'us-west-2'" /* expectedRegionFromExceptionMsg */);
+
+        TestUtils.functionCallThrowsException(() -> clientWithNoCredentials.getBucketLocation(bucketAtRegion2),
+                403 /* expectedStatusCode */,
+                "AccessDenied" /* expectedErrorCode */,
+                "Access Denied");
     }
 
     @Test
@@ -126,42 +142,48 @@ class S3CompatApiTest {
         Assertions.assertEquals(file.length(), mt.getObjectContentLength());
 
         // Negative test: provide wrong version id
-        TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObjectMetadata(bucketAtRegion2, filePath, "NonExistingVersion"), 400, "400 Bad Request", null);
+        TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObjectMetadata(bucketAtRegion2, filePath, "NonExistingVersion"),
+                400 /* expectedStatusCode */,
+                "400 Bad Request" /* expectedErrorCode */,
+                "Bad Request" /* expectedRegionFromExceptionMsg */);
         // Negative test: get metadata for not existing file
-        TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObjectMetadata(bucketAtRegion2, "not-existing" + filePath), 404, "404 Not Found", null);
+        TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObjectMetadata(bucketAtRegion2, "not-existing" + filePath),
+                404 /* expectedStatusCode */,
+                "404 Not Found" /* expectedErrorCode */,
+                "Not Found" /* expectedRegionFromExceptionMsg */);
     }
 
     @Test
     void putObject() throws Exception {
         startTest(TestUtils.OPERATIONS.PUT_OBJECT);
-        // Positive test: put a file
+        // Positive test: put a file successfully
         clientWithRegion2.putObject(bucketAtRegion2, prefix, localFilePath1);
-        // Positive test: put a file providing user metadata
+        // Positive test: put a file with user metadata
         testPutObjectWithUserMetadata();
         // Positive test: put a file with up to size of 5GB
-       // testPutLargeObjectUpTo5GB();
+        testPutLargeObjectUpTo5GB();
 
         // Negative test: put object on a wrong region bucket
         TestUtils.functionCallThrowsException(() -> clientWithRegion1.putObject(bucketAtRegion2, prefix, localFilePath1),
                 400 /* expectedStatusCode */,
                 "AuthorizationHeaderMalformed" /* expectedErrorCode */ ,
-                region2 /* expectedRegionFromExceptionMsg */);
+                "The authorization header is malformed; the region 'us-east-1' is wrong; expecting 'us-west-2'" /* expectedErrorMsg */);
         // Negative test: put object on a not existing bucket
         TestUtils.functionCallThrowsException(() -> clientWithRegion1.putObject(notExistingBucket, prefix, localFilePath1),
                 404 /* expectedStatusCode */,
                 "NoSuchBucket" /* expectedErrorCode */ ,
-                null /* expectedRegionFromExceptionMsg */);
+                "The specified bucket does not exist" /* expectedRegionFromExceptionMsg */);
         // Negative test: put object providing invalid access key id
         TestUtils.functionCallThrowsException(() -> clientWithInvalidKeyId.putObject(bucketAtRegion2, prefix, localFilePath1),
                 403 /* expectedStatusCode */,
                 "InvalidAccessKeyId" /* expectedErrorCode */,
-                null /* expectedRegionFromExceptionMsg */);
+                "The AWS Access Key Id you provided does not exist in our records." /* expectedErrorMsg */);
 
         // Negative test: put object providing invalid secret key
         TestUtils.functionCallThrowsException(() -> clientWithInvalidSecret.putObject(bucketAtRegion2, prefix, localFilePath1),
                 403 /* expectedStatusCode */,
                 "SignatureDoesNotMatch" /* expectedErrorCode */,
-                null /* expectedRegionFromExceptionMsg */);
+                "The request signature we calculated does not match the signature you provided. Check your key and signing method." /* expectedErrorMsg */);
     }
 
     private void testPutObjectWithUserMetadata() throws IOException {
@@ -192,11 +214,11 @@ class S3CompatApiTest {
         File file = new File(largeFile);
         file.createNewFile();
         RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        raf.setLength(5368709120L);
+        raf.setLength(size_5GB);
         raf.close();
 
         clientWithRegion2.putObject(bucketAtRegion2, prefix, S3CompatApiTest.largeFile);
-        // verify tha the object is successfully put
+        // verify that the object is successfully put
         String filePath = prefix + "/" + largeFile;
         RemoteObjectMetadata metadata = clientWithRegion2.getObjectMetadata(bucketAtRegion2, filePath);
         Assertions.assertEquals(size_5GB, metadata.getObjectContentLength());

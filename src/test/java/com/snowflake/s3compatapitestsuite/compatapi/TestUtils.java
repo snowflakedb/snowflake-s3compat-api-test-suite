@@ -10,22 +10,18 @@ public class TestUtils {
      * @param cbt The function call that would throw exception
      * @param expectedStatusCode Expected status code from the exception
      * @param expectedErrorCode Expected error code from the exception
-     * @param expectedRegionFromExceptionMsg Expected region name from the exception.
+     * @param expectedMsg Expected error message.
      * @throws Exception
      */
-    public static void functionCallThrowsException(CodeBlockThrows cbt, Integer expectedStatusCode, String expectedErrorCode, String expectedRegionFromExceptionMsg) throws Exception {
+    public static void functionCallThrowsException(CodeBlockThrows cbt, Integer expectedStatusCode, String expectedErrorCode, String expectedMsg) throws Exception {
         try {
             cbt.invoke();
         } catch (AmazonS3Exception ex) {
-            if (ex instanceof MultiObjectDeleteException) {
-                ex.getErrorMessage().equals("One or more objects could not be deleted");
-            }
             Assertions.assertEquals(ex.getStatusCode(), expectedStatusCode);
             Assertions.assertEquals(ex.getErrorCode(), expectedErrorCode);
             Assertions.assertNotNull(ex.getRequestId());
-            if (expectedRegionFromExceptionMsg != null) {
-                Assertions.assertEquals(expectedRegionFromExceptionMsg, ex.getAdditionalDetails().get("Region"));
-            }
+            // error message does not need to exactly like aws response
+            // Assertions.assertEquals(expectedMsg, ex.getErrorMessage());
             return;
         } catch (Exception ex) {
             Assertions.fail("Expected an exception: " + ex);
