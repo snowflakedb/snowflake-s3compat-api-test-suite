@@ -20,29 +20,53 @@ import java.util.*;
  * Test s3compat api calls needed for Snowflake.
  */
 class S3CompatApiTest {
-
+    /** A client created without providing specific region. */
     private static S3CompatStorageClient clientWithNoRegionSpecified;
+    /** A client created with {@link region1} provided. */
     private static S3CompatStorageClient clientWithRegion1;
+    /** A client created with {@link region2} provided. */
     private static S3CompatStorageClient clientWithRegion2;
+    /** A client created with an invalid access key id. */
     private static S3CompatStorageClient clientWithInvalidKeyId;
+    /** A client created with an invalid secret key id. */
     private static S3CompatStorageClient clientWithInvalidSecret;
+    /** A client created without providing any credentials. */
     private static S3CompatStorageClient clientWithNoCredentials;
+    /** AWS credentials. The credentials should be set following aws guide here
+     * https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
+     * */
     private static AWSCredentialsProvider credentialsProvider;
-    private static final String endPoint = "s3.amazonaws.com";
-    private static final String region1 = "us-east-1";
-    private static final String region2 = "us-west-2";
-    private static final String nullRegion = null;
-    private static final String publicBucket = "scedc-pds";
-    private static final String bucketAtRegion1 = "sfc-dev1";
-    private static final String bucketAtRegion2 ="sfc-dev1-data";
-    private static final String notExistingBucket = "sf-not-existing-bucket";
+    /** A non-existing bucket. */
+    private static final String notExistingBucket = "sf-non-existing-bucket";
+    /** A prefix for {@link bucketAtRegion2} */
     private static final String prefixForBucketAtReg2 = "s3compatapi/tests";
-    private static String prefixForPageListingAtReg2 = "s3compatapi/tests/data";
+    /** A local file for testing.*/
     private static final String localFilePath1 = "src/resources/test1.txt";
+    /** A second local file for testing. */
     private static final String localFilePath2 = "src/resources/test2.json";
+    /** A third file name for testing. */
     private static final String largeFile = "src/resources/test3.txt";
+    /** A prefix will be updated for each test. */
     private static String prefix = "";
-
+    /**
+     * Please fill in below values for testing.
+     */
+    /** An endpoint the client will make requests to. eg: "s3.amazonaws.com" */
+    private static final String endPoint = "";
+    /** A region that a bucket locates, and it should correspond to s3 bucket region. eg: "us-east-1" */
+    private static final String region1 = "";
+    /** Another region that is different from {@link region1}. eg: "us-west-2" */
+    private static final String region2 = "";
+    /** A bucket locates at {@link region1}. The bucket corresponds to S3 bucket. */
+    private static final String bucketAtRegion1 = "";
+    /** A bucket locates at {@link region2}. */
+    private static final String bucketAtRegion2 ="";
+    /** A public bucket, which means without providing credentials, the client can have access to it. */
+    private static final String publicBucket = "";
+    /** A prefix for {@link bucketAtRegion2} under which should contain over 1000 files, this is for page listing tests. */
+    private static String prefixForPageListingAtReg2 = "";
+    /** The total number of files under {@link prefixForPageListAtReg2}, it must > 1000 */
+    private static final int pageListingTotalSize = 0;
 
     @BeforeAll
     public static void setupBase() {
@@ -51,7 +75,7 @@ class S3CompatApiTest {
         BasicAWSCredentials wrongSecret = new BasicAWSCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), "invalid_key_id");
         clientWithRegion1 = new S3CompatStorageClient(credentialsProvider, region1, endPoint);
         clientWithRegion2 = new S3CompatStorageClient(credentialsProvider, region2, endPoint);
-        clientWithNoRegionSpecified = new S3CompatStorageClient(credentialsProvider, nullRegion, endPoint);
+        clientWithNoRegionSpecified = new S3CompatStorageClient(credentialsProvider, null, endPoint);
         clientWithInvalidKeyId = new S3CompatStorageClient(new AWSStaticCredentialsProvider(wrongKeyId), region2, endPoint);
         clientWithInvalidSecret = new S3CompatStorageClient(new AWSStaticCredentialsProvider(wrongSecret), region2, endPoint);
         clientWithNoCredentials = new S3CompatStorageClient(null, region2, endPoint);
@@ -236,7 +260,7 @@ class S3CompatApiTest {
         clientWithRegion2.putObject(bucketAtRegion2, prefix, localFilePath2);
         Assertions.assertEquals(2, clientWithRegion2.listObjects(bucketAtRegion2, prefix).size());
         // page listing, should have more than 1000 files on the location to trigger page listing
-        Assertions.assertEquals(4000, clientWithRegion2.listObjects(bucketAtRegion2, prefixForPageListingAtReg2).size());
+        Assertions.assertEquals(pageListingTotalSize, clientWithRegion2.listObjects(bucketAtRegion2, prefixForPageListingAtReg2).size());
     }
 
 
@@ -252,7 +276,10 @@ class S3CompatApiTest {
 
     void testPageListing() throws UnsupportedEncodingException {
         // page listing, should have more than 1000 files on the location to trigger page listing
-        Assertions.assertEquals(4000, clientWithRegion2.listObjectsV2(bucketAtRegion2, prefixForPageListingAtReg2).size());
+        if (pageListingTotalSize <= 1000) {
+            Assertions.fail("Expect to list over 1000 files.");
+        }
+        Assertions.assertEquals(pageListingTotalSize, clientWithRegion2.listObjectsV2(bucketAtRegion2, prefixForPageListingAtReg2).size());
     }
 
     @Test
