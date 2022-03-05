@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
+/**
+ * Wrapper for a S3Compat storage client.
+ */
 public class S3CompatStorageClient implements StorageClient {
 
     private static final Logger logger = LogManager.getLogger(S3CompatStorageClient.class);
@@ -39,8 +42,8 @@ public class S3CompatStorageClient implements StorageClient {
     /**
      * Constructor for a s3 compat storage client.
      * @param awsCredentialsProvider Wrapper for aws credential.
-     * @param region
-     * @param endpoint
+     * @param region The region the client targeting.
+     * @param endpoint Endpoint the client would make requests to.
      */
     public S3CompatStorageClient(
             @Nullable AWSCredentialsProvider awsCredentialsProvider,
@@ -113,12 +116,18 @@ public class S3CompatStorageClient implements StorageClient {
         return RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
     }
 
-    public RemoteObjectMetadata getObjectMetadata(String bucketName, String key) {
-        return getObjectMetadata(bucketName, key, null);
+    /**
+     * Get metadata of an object.
+     * @param bucketName Bucket name where the object locates.
+     * @param filePath path of a file .
+     * @return Metadata of the object.
+     */
+    public RemoteObjectMetadata getObjectMetadata(String bucketName, String filePath) {
+        return getObjectMetadata(bucketName, filePath, null);
     }
 
     @Override
-    public PutObjectResult putObject(String bucketName, String key, String fileName) {
+    public void putObject(String bucketName, String key, String fileName) {
         final File file = new File(fileName);
         WriteObjectSpec writeObjectSpec = null;
         PutObjectResult putObjectResult = null;
@@ -128,7 +137,6 @@ public class S3CompatStorageClient implements StorageClient {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return putObjectResult;
     }
 
     /**
@@ -270,12 +278,12 @@ public class S3CompatStorageClient implements StorageClient {
     }
 
     @Override
-    public List<S3VersionSummary> listVersions(String bucketName, String prefix, boolean useUrlEncoding) {
+    public List<S3VersionSummary> listVersions(String bucketName, String key, boolean useUrlEncoding) {
         List<S3VersionSummary> versionSum = null;
         try {
             ListVersionsRequest listVersionsReq = new ListVersionsRequest();
             listVersionsReq.withBucketName(bucketName);
-            listVersionsReq.withPrefix(prefix);
+            listVersionsReq.withPrefix(key);
             if (useUrlEncoding) {
                 listVersionsReq.withEncodingType("url");
             }
@@ -349,12 +357,12 @@ public class S3CompatStorageClient implements StorageClient {
     }
 
     @Override
-    public void copyObject(String sourceBucket, String sourceFileName, @Nullable String sourceFileVersionId, String dstBucket, String dstFileName) {
+    public void copyObject(String sourceBucket, String sourceKey, @Nullable String sourceFileVersionId, String dstBucket, String destKey) {
         CopyObjectRequest cpReq;
         if (sourceFileVersionId != null) {
-            cpReq = new CopyObjectRequest(sourceBucket,sourceFileName, sourceFileVersionId, dstBucket, dstFileName);
+            cpReq = new CopyObjectRequest(sourceBucket, sourceKey, sourceFileVersionId, dstBucket, destKey);
         } else {
-            cpReq = new CopyObjectRequest(sourceBucket,sourceFileName, dstBucket, dstFileName);
+            cpReq = new CopyObjectRequest(sourceBucket, sourceKey, dstBucket, destKey);
         }
         try {
             this.s3Client.copyObject(cpReq);
@@ -385,10 +393,20 @@ public class S3CompatStorageClient implements StorageClient {
         return pg.generate();
     }
 
+    /**
+     * Generate a pre-signed url.
+     * @param bucketName Bucket name of the object where locates.
+     * @param key The file path.
+     * @return a pre-signed url for the file.
+     */
     public String generatePresignedUrl(String bucketName, String key) {
         return generatePresignedUrl(bucketName, key, -1, null);// use default expiry time
     }
 
+    /**
+     * Get the region name for the client.
+     * @return The name of the region.
+     */
     public String getRegionName() {
         return this.s3Client.getRegionName();
     }

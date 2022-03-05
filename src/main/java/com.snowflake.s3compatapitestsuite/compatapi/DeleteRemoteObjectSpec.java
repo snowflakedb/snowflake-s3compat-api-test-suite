@@ -26,13 +26,14 @@ public class DeleteRemoteObjectSpec {
     DeleteRemoteObjectSpec(String fileName) {
         this(fileName, null);
     }
+
     /**
-     * Constructor for a DeleteRemoteObjectSpec with a version/snapshot id.
+     * Constructor for a DeleteRemoteObjectSpec with a version id.
      *
      * @param fileName Name of the object to read. Corresponds to an S3 key.
-     * @param remoteVersionId VersionId (for S3) in order to request metadata about a specific version.
+     * @param remoteVersionId VersionId in order to request metadata about a specific version.
      */
-    DeleteRemoteObjectSpec(String fileName, String remoteVersionId) {
+    DeleteRemoteObjectSpec(String fileName, @Nullable String remoteVersionId) {
         if (fileName.trim().isEmpty()) {
             throw new IllegalArgumentException("fileName must not be null, empty, or all whitespace.");
         }
@@ -40,6 +41,7 @@ public class DeleteRemoteObjectSpec {
         this.remoteFileName = fileName;
         this.remoteVersionId = remoteVersionId;
     }
+
     /**
      * Returns the S3 key of the object of interest.
      *

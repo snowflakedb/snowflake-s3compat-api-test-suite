@@ -8,15 +8,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+/**
+ * Wrapper to write an object.
+ */
 public class WriteObjectSpec {
     private static final Logger logger = LogManager.getLogger(WriteObjectSpec.class);
     private final String bucketName;
-    /** The file path which is relative to the bucket name. */
+    /** The file path which is relative to the bucket name. Correspond to S3 key.*/
     private final String filePath;
     /** Encapsulates the input stream to write to remote storage. */
     private final @NotNull InputStreamSupplier inputStreamSupplier;
@@ -81,18 +83,34 @@ public class WriteObjectSpec {
         this.clientTimeoutInMs = clientTimeoutInMs;
     }
 
+    /**
+     * Get the bucket name.
+     * @return Name of the bucket.
+     */
     public String getBucketName() {
         return bucketName;
     }
 
+    /**
+     * Get the file path.
+     * @return The path of the file.
+     */
     public String getFilePath() {
         return filePath;
     }
 
+    /**
+     * Get the input stream supplier.
+     * @return The input stream supplier.
+     */
     public InputStreamSupplier getInputStreamSupplier() {
         return inputStreamSupplier;
     }
 
+    /**
+     * Get the additional metadata for the object.
+     * @return A map representing additional metadata.
+     */
     public Map<String, String> getAdditionalBlobMetadata() {
         return additionalBlobMetadata;
     }
@@ -101,14 +119,26 @@ public class WriteObjectSpec {
         return bucketOwnerFullControl;
     }
 
+    /**
+     * Get the timeout.
+     * @return Timeout in millisecond.
+     */
     public Integer getClientTimeoutInMs() {
         return clientTimeoutInMs;
     }
 
+    /**
+     * Get the first input stream.
+     * @return The input stream.
+     */
     public InputStream getFirstInputStream() {
         return firstInputStream;
     }
 
+    /**
+     * Get the content length to write.
+     * @return The length of the content to write.
+     */
     public long getContentLengthToWrite() {
         return contentLengthToWrite;
     }
@@ -167,23 +197,11 @@ public class WriteObjectSpec {
     /**
      * Functional interface: A Supplier of an InputStream.
      *
-     * <p>IMPORTANT: Each call to get() should return a different InputStream. This is extremely
-     * important in the context of retries,
+     * <p>IMPORTANT: Each call to get() should return a different InputStream.
      */
     @FunctionalInterface
     public interface InputStreamSupplier {
         public @NotNull InputStream get() throws IOException;
-    }
-
-    /**
-     * Functional interface to allow definition of a Supplier that throws.
-     *
-     * @param <T> What the supplier supplies.
-     */
-    @FunctionalInterface
-    public interface SupplierWithRSPE<T> {
-        public @NotNull T getWithRSPE(final StorageClient remoteClient)
-                throws RuntimeException;
     }
 
 }

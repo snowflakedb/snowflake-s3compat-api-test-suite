@@ -32,7 +32,9 @@ public class TestUtils {
         throw new Exception("Unreachable code reached");
     }
 
-
+    /**
+     * Operations tested.
+     */
     public enum OPERATIONS {
         GET_BUCKET_LOCATION,
         GET_OBJECT,

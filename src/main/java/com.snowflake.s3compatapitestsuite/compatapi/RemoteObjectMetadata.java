@@ -31,17 +31,15 @@ public class RemoteObjectMetadata {
     private final @Nullable Date objectLastModified;
 
     /**
-     * Encapsulates the S3-specific rich metadata object Needed because the ObjectMetadata object can be used as an argument for S3 copy commands, and it is
-     * impractical to extract *ALL* information and reconstruct it for copies.
+     * Encapsulates the S3-specific rich metadata object.
      */
     private final @Nullable ObjectMetadata s3FullMetadata;
 
     /**
-     * Encapsulates the information returned from the getUserMetadata (S3). Like "x-amz-matdesc"
+     * Encapsulates the information returned from the getUserMetadata. Like "x-amz-matdesc".
      */
     private final @Nullable Map<String, String> objectUserMetadata;
 
-    /**
      /**
      * Constructor for a RemoteObjectMetadata with no S3-specific metadata.
      *
@@ -59,7 +57,7 @@ public class RemoteObjectMetadata {
      *
      * @param contentLength Size of the object contents.
      * @param eTag ETag assigned to the object by the storage provider.
-     * @param versionId VersionId (S3) / SnapshotId (Azure) of the object.
+     * @param versionId VersionId of the object.
      * @param lastModified Time of last object modification in remote storage.
      * @param s3SpecificMetadata S3-specific metadata used for S3 copy commands.
      */
@@ -118,26 +116,50 @@ public class RemoteObjectMetadata {
         return Objects.hash(getObjectContentLength(), getObjectETag(), getObjectVersionId(), getObjectLastModified(), getS3FullMetadata(), getObjectUserMetadata());
     }
 
+    /**
+     * Get the object content length.
+     * @return The length of the object content.
+     */
     public long getObjectContentLength() {
         return objectContentLength;
     }
 
+    /**
+     * Get the object etag.
+     * @return Etag of the object.
+     */
     public String getObjectETag() {
         return objectETag;
     }
 
+    /**
+     * Get the version id of the object.
+     * @return The version id of the object.
+     */
     public String getObjectVersionId() {
         return objectVersionId;
     }
 
+    /**
+     * Get the last modified time of the object.
+     * @return The last modified time.
+     */
     public Date getObjectLastModified() {
         return objectLastModified;
     }
 
+    /**
+     * Get the s3 ObjectMetadata for the object.
+     * @return A S3 ObjectMetadata.
+     */
     public ObjectMetadata getS3FullMetadata() {
         return s3FullMetadata;
     }
 
+    /**
+     * Get the user object metadata.
+     * @return A map of user metadata.
+     */
     public Map<String, String> getObjectUserMetadata() {
         return objectUserMetadata;
     }

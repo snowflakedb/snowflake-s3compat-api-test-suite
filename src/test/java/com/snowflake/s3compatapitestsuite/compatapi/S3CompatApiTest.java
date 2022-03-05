@@ -16,7 +16,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 
-
+/**
+ * Test s3compat api calls needed for Snowflake.
+ */
 class S3CompatApiTest {
 
     private static S3CompatStorageClient clientWithNoRegionSpecified;
