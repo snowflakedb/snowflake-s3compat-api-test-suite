@@ -9,7 +9,6 @@ import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ResponseHeaderOverrides;
 import com.google.common.base.Strings;
 import org.jetbrains.annotations.NotNull;
-
 import java.net.URL;
 import java.util.Date;
 
@@ -28,10 +27,8 @@ public class PreSignedUrlGenerator {
     private String contentType;
     /** Content encoding of the response */
     private String responseContentEncoding;
-
     /** The client this generator will use */
     private @NotNull S3CompatStorageClient client;
-
     /**
      * Generate pre-signed url
      *
@@ -46,11 +43,9 @@ public class PreSignedUrlGenerator {
             }
             long expiresAt = now + lifetimeInSecs * 1000;
             java.util.Date expiration = new Date(expiresAt);
-
             // create a new GeneratePresignedUrlRequest instance
             GeneratePresignedUrlRequest presignedUrlRequest =
                     new GeneratePresignedUrlRequest(bucketName, key);
-
             // update the request with the url expiration time and the http method
             presignedUrlRequest.withExpiration(expiration).withMethod(HttpMethod.GET);
             // if a valid content type has been specified
@@ -80,7 +75,6 @@ public class PreSignedUrlGenerator {
         this.bucketName = bucketName;
         return this;
     }
-
     /**
      * Generate with a life time span.
      * @param lifetimeInSecs Time in seconds to expire.
@@ -90,7 +84,6 @@ public class PreSignedUrlGenerator {
         this.lifetimeInSecs = lifetimeInSecs;
         return this;
     }
-
     /**
      * Generate with a file key.
      * @param key The key for the file, which is the "prefix + file name".
@@ -101,7 +94,6 @@ public class PreSignedUrlGenerator {
         this.key = key;
         return this;
     }
-
     /**
      * Generate with content type provided.
      * @param contentType
@@ -111,7 +103,6 @@ public class PreSignedUrlGenerator {
         this.contentType = contentType;
         return this;
     }
-
     /**
      * Generate with require of response content encoding.
      * @param responseContentEncoding Response content encoding.
@@ -122,7 +113,6 @@ public class PreSignedUrlGenerator {
         this.responseContentEncoding = responseContentEncoding;
         return this;
     }
-
     /**
      * Generate with a client provided.
      * @param client The client that the generator would use to make requests.

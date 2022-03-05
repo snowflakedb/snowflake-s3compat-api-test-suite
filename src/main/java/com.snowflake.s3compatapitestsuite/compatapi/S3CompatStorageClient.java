@@ -30,15 +30,12 @@ import java.util.TreeMap;
  * Wrapper for a S3Compat storage client.
  */
 public class S3CompatStorageClient implements StorageClient {
-
     private static final Logger logger = LogManager.getLogger(S3CompatStorageClient.class);
-
     final AmazonS3 s3Client;
     private static final int CLIENT_TIMEOUT_FOR_READ = 20_000; // in MS
     private static final String ENCODING = "UTF-8";
     /** Configurable value to use for the max error retry configuration when creating an S3 client. */
     private static final int MAX_ERROR_RETRY = 5;
-
     /**
      * Constructor for a s3 compat storage client.
      * @param awsCredentialsProvider Wrapper for aws credential.
@@ -51,7 +48,6 @@ public class S3CompatStorageClient implements StorageClient {
             String endpoint) {
         this.s3Client = createS3Client(region, awsCredentialsProvider, endpoint);
     }
-
     private AmazonS3 createS3Client(
             final @Nullable String region,
             final @Nullable AWSCredentialsProvider awsCredentialsProvide,
@@ -70,7 +66,6 @@ public class S3CompatStorageClient implements StorageClient {
         s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(false).build());
         return s3Client;
     }
-
     @Override
     public String getBucketLocation(String bucketName) {
         String regionRes;
@@ -88,7 +83,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return regionRes;
     }
-
     @Override
     public S3Object getObject(String bucketName, String key) {
         try {
@@ -101,7 +95,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw ex;
         }
     }
-
     @Override
     public RemoteObjectMetadata getObjectMetadata(String bucketName, String key, @Nullable String versionId) throws AmazonS3Exception{
         GetObjectMetadataRequest objectMetadataRequest = new GetObjectMetadataRequest(bucketName, key);
@@ -110,7 +103,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
     }
-
     /**
      * Get metadata of an object.
      * @param bucketName Bucket name where the object locates.
@@ -120,7 +112,6 @@ public class S3CompatStorageClient implements StorageClient {
     public RemoteObjectMetadata getObjectMetadata(String bucketName, String filePath) {
         return getObjectMetadata(bucketName, filePath, null);
     }
-
     @Override
     public void putObject(String bucketName, String key, String fileName) {
         final File file = new File(fileName);
@@ -133,7 +124,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw new RuntimeException(e);
         }
     }
-
     /**
      * Write an object to a remote storage location.
      * @param writeObjectSpec Wrapper for the information of the object to write.
@@ -172,7 +162,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         throw new RuntimeException("Fail to putObject:" + writeObjectSpec.getFilePath());
     }
-
     @Override
     public List<S3ObjectSummary> listObjects(String bucketName, String prefix) {
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest();
@@ -194,7 +183,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw new RuntimeException(e);
         }
     }
-
     private @NotNull List<S3ObjectSummary> fromObjectListing(@NotNull ObjectListing ol) throws UnsupportedEncodingException {
         String encodingType = ol.getEncodingType();
         String bucketName = ol.getBucketName();
@@ -211,7 +199,6 @@ public class S3CompatStorageClient implements StorageClient {
             for (S3ObjectSummary s3Obj : s3Summaries) {
                 s3Obj.setKey(URLDecoder.decode(s3Obj.getKey(), ENCODING));
             }
-
             // The server expects it to be non-url encoded.  Reverse the encoding here in order
             // to enable proper object listing with url encoding on.
             String urlEncodedNextMarker = ol.getNextMarker();
@@ -221,9 +208,7 @@ public class S3CompatStorageClient implements StorageClient {
             }
         }
         return s3Summaries;
-
     }
-
     @Override
     public List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix) {
         ListObjectsV2Request listV2Req = new ListObjectsV2Request();
@@ -240,7 +225,6 @@ public class S3CompatStorageClient implements StorageClient {
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
         }
-
     }
 
     private @NotNull List<S3ObjectSummary> fromV2ObjectListing(@NotNull ListObjectsV2Result listRes,
@@ -268,7 +252,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return s3Summaries;
     }
-
     @Override
     public List<S3VersionSummary> listVersions(String bucketName, String key, boolean useUrlEncoding) {
         List<S3VersionSummary> versionSum = null;
@@ -290,7 +273,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return versionSum;
     }
-
     private @NotNull List<S3VersionSummary> fromListVersions(@NotNull VersionListing vl) throws UnsupportedEncodingException {
         String encodingType = vl.getEncodingType();
 
@@ -316,7 +298,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return s3Summaries;
     }
-
     @Override
     public void deleteObject(String bucketName, String fileKey) {
         try {
@@ -328,7 +309,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw ex;
         }
     }
-
     @Override
     public int deleteObjects(String bucketName, List<DeleteRemoteObjectSpec> toDeleteList){
         List<DeleteObjectsRequest.KeyVersion> kvList = new ArrayList<>(toDeleteList.size());
@@ -347,7 +327,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw ex;
         }
     }
-
     @Override
     public void copyObject(String sourceBucket, String sourceKey, @Nullable String sourceFileVersionId, String dstBucket, String destKey) {
         CopyObjectRequest cpReq;
@@ -362,7 +341,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw ex;
         }
     }
-
     @Override
     public void setRegion(Region region) {
          try {
@@ -371,7 +349,6 @@ public class S3CompatStorageClient implements StorageClient {
              throw ex;
          }
     }
-
     @Override
     public String generatePresignedUrl(String bucketName, String key, int expiryTimeInSec, String contentType) {
         PreSignedUrlGenerator pg =  new PreSignedUrlGenerator()
@@ -384,7 +361,6 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return pg.generate();
     }
-
     /**
      * Generate a pre-signed url.
      * @param bucketName Bucket name of the object where locates.
@@ -394,7 +370,6 @@ public class S3CompatStorageClient implements StorageClient {
     public String generatePresignedUrl(String bucketName, String key) {
         return generatePresignedUrl(bucketName, key, -1, null);// use default expiry time
     }
-
     /**
      * Get the region name for the client.
      * @return The name of the region.
@@ -402,5 +377,4 @@ public class S3CompatStorageClient implements StorageClient {
     public String getRegionName() {
         return this.s3Client.getRegionName();
     }
-
 }

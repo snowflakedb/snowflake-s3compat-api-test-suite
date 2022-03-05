@@ -24,19 +24,15 @@ public class WriteObjectSpec {
     private final @NotNull InputStreamSupplier inputStreamSupplier;
     /** Additional blob metadata we may want to add */
     private Map<String, String> additionalBlobMetadata;
-
     /** Max execution time in ms. Null value implies default. */
     private final @Nullable Integer clientTimeoutInMs;
-
     /**
      * Initial input stream used to verify that subsequent calls to inputStreamSupplier.get() do not
      * return the same
      */
     private final @Nullable InputStream firstInputStream;
-
     /** Encapsulates the length of content to write to remote storage. */
     private final long contentLengthToWrite;
-
     /**
      * Constructor for a PutRemoteObjectSpec.
      * @param bucketName Bucket name of the location to store the object in the remote storage platform.
@@ -77,7 +73,6 @@ public class WriteObjectSpec {
         this.additionalBlobMetadata = additionalBlobMetadata;
         this.clientTimeoutInMs = clientTimeoutInMs;
     }
-
     /**
      * Get the bucket name.
      * @return Name of the bucket.
@@ -85,7 +80,6 @@ public class WriteObjectSpec {
     public String getBucketName() {
         return bucketName;
     }
-
     /**
      * Get the file path.
      * @return The path of the file.
@@ -93,7 +87,6 @@ public class WriteObjectSpec {
     public String getFilePath() {
         return filePath;
     }
-
     /**
      * Get the input stream supplier.
      * @return The input stream supplier.
@@ -101,7 +94,6 @@ public class WriteObjectSpec {
     public InputStreamSupplier getInputStreamSupplier() {
         return inputStreamSupplier;
     }
-
     /**
      * Get the additional metadata for the object.
      * @return A map representing additional metadata.
@@ -109,7 +101,6 @@ public class WriteObjectSpec {
     public Map<String, String> getAdditionalBlobMetadata() {
         return additionalBlobMetadata;
     }
-
     /**
      * Get the timeout.
      * @return Timeout in millisecond.
@@ -117,7 +108,6 @@ public class WriteObjectSpec {
     public Integer getClientTimeoutInMs() {
         return clientTimeoutInMs;
     }
-
     /**
      * Get the first input stream.
      * @return The input stream.
@@ -125,7 +115,6 @@ public class WriteObjectSpec {
     public InputStream getFirstInputStream() {
         return firstInputStream;
     }
-
     /**
      * Get the content length to write.
      * @return The length of the content to write.
@@ -133,7 +122,6 @@ public class WriteObjectSpec {
     public long getContentLengthToWrite() {
         return contentLengthToWrite;
     }
-
     /**
      * Helper that validates that the given String parameter is not null, empty, or all whitespace.
      *
@@ -145,7 +133,6 @@ public class WriteObjectSpec {
             throw new IllegalArgumentException(argName + " may not be blank.");
         }
     }
-
     /**
      * Helper method to get and validate an inputstream from the stream supplier. Validates that the
      * returned stream is not null.
@@ -162,7 +149,6 @@ public class WriteObjectSpec {
         }
         return inputStream;
     }
-
     /**
      * Get the input stream representing the contents to write. - Ensure that we're not getting the
      * same input stream as in an earlier call. That will cause a number of problems downstream. - If
@@ -184,7 +170,6 @@ public class WriteObjectSpec {
         }
         return is;
     }
-
     /**
      * Functional interface: A Supplier of an InputStream.
      *
@@ -194,5 +179,4 @@ public class WriteObjectSpec {
     public interface InputStreamSupplier {
         public @NotNull InputStream get() throws IOException;
     }
-
 }

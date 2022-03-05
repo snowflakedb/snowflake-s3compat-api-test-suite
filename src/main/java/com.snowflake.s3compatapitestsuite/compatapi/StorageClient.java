@@ -10,14 +10,12 @@ import java.util.List;
 
 /** Interface representing a storage client. */
 public interface StorageClient {
-
     /**
      * Gets the geographical location where stored the specified bucket.
      * @param bucketName The name of the bucket to lookup.
      * @return The location of the bucket.
      */
     String getBucketLocation(String bucketName);
-
     /**
      * Get the object by providing bucket name and key.
      * @param bucketName The name of the bucket containing the desired object.
@@ -25,7 +23,6 @@ public interface StorageClient {
      * @return The object.
      */
     S3Object getObject(String bucketName, String key);
-
     /**
      * Get the object by providing bucket name and key.
      * @param bucketName The name of the bucket containing the desired object
@@ -34,7 +31,6 @@ public interface StorageClient {
      * @return The object metadata.
      */
     RemoteObjectMetadata getObjectMetadata(String bucketName, String key, @Nullable String versionId);
-
     /**
      * Write an object to a remote storage location.
      * @param bucketName The name of an existing bucket, to which the new object will be uploaded.
@@ -42,7 +38,6 @@ public interface StorageClient {
      * @param fileName The name of the file to upload to Amazon S3.
      */
     void putObject(String bucketName, String key, String fileName) ;
-
     /**
      * List all objects with given bucket name and prefix.
      * @param bucketName Name of the bucket.
@@ -50,7 +45,6 @@ public interface StorageClient {
      * @return a list of summary information about the objects in the specified bucket.
      */
     List<S3ObjectSummary> listObjects(String bucketName, String prefix);
-
     /**
      * List objects V2 by providing bucket name and prefix of the object.
      * @param bucketName Name of the bucket
@@ -58,7 +52,6 @@ public interface StorageClient {
      * @return list of objects summaries.
      */
     List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix) ;
-
     /**
      * List all versions in a location.
      *
@@ -68,14 +61,12 @@ public interface StorageClient {
      * @return list of versions
      */
     List<S3VersionSummary> listVersions(String bucketName, String key, boolean useUrlEncoding) ;
-
     /**
      * Deletes the specified object in the specified bucket.
      * @param bucketName Name of the bucket that contains the object to delete.
      * @param fileKey The key of the object to delete.
      */
     void deleteObject(String bucketName, String fileKey);
-
     /**
      * Delete all the objects per the request.
      * @param bucketName The bucket name where the objects locate
@@ -83,7 +74,6 @@ public interface StorageClient {
      * @return The number of deleted objects.
      */
     int deleteObjects(String bucketName, List<DeleteRemoteObjectSpec> toDeleteList);
-
     /**
      * Copy all objects from srcPath to dstPath. It will copy all objects with srcPath as prefix in their key,
      * and replace srcPath in their full path with dstPath as the destination.
@@ -94,13 +84,11 @@ public interface StorageClient {
      * @param destKey Name of the target of the copy.
      */
     void copyObject(String sourceBucket, String sourceKey, @Nullable String sourceFileVersionId, String dstBucket, String destKey);
-
     /**
      * Sets the region for this client's service calls.
      * @param region The region this client will communicate with.
      */
     void setRegion(Region region);
-
     /**
      * Generate a pre-signed URL.
      * @param bucketName Bucket name.

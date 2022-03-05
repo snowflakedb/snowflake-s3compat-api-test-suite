@@ -14,10 +14,8 @@ import org.jetbrains.annotations.Nullable;
 public class DeleteRemoteObjectSpec {
     /** Encapsulates the S3 key. */
     private final @NotNull String remoteFileName;
-
     /** Encapsulates the versionId. */
     private final @Nullable String remoteVersionId;
-
     /**
      * Constructor for a DeleteRemoteObjectSpec with no version id.
      *
@@ -26,7 +24,6 @@ public class DeleteRemoteObjectSpec {
     DeleteRemoteObjectSpec(String fileName) {
         this(fileName, null);
     }
-
     /**
      * Constructor for a DeleteRemoteObjectSpec with a version id.
      *
@@ -37,11 +34,9 @@ public class DeleteRemoteObjectSpec {
         if (fileName.trim().isEmpty()) {
             throw new IllegalArgumentException("fileName must not be null, empty, or all whitespace.");
         }
-
         this.remoteFileName = fileName;
         this.remoteVersionId = remoteVersionId;
     }
-
     /**
      * Returns the S3 key of the object of interest.
      *
@@ -51,7 +46,6 @@ public class DeleteRemoteObjectSpec {
     String getFileName() {
         return this.remoteFileName;
     }
-
     /**
      * Returns the S3 versionId of the object of interest.
      *
@@ -60,7 +54,6 @@ public class DeleteRemoteObjectSpec {
     String getObjectVersionId() {
         return this.remoteVersionId;
     }
-
     /**
      * Converts this object into an S3 KeyVersion object.
      *
@@ -70,7 +63,6 @@ public class DeleteRemoteObjectSpec {
     DeleteObjectsRequest.KeyVersion toS3KeyVersion() {
         return new DeleteObjectsRequest.KeyVersion(this.getFileName(), this.getObjectVersionId());
     }
-
     @Override
     public @NotNull String toString() {
         return "DeleteRemoteObjectSpec{"
@@ -82,5 +74,4 @@ public class DeleteRemoteObjectSpec {
                 + '\''
                 + '}';
     }
-
 }

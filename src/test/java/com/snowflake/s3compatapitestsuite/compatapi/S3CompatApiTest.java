@@ -192,7 +192,6 @@ class S3CompatApiTest {
     }
 
     private void testPutObjectWithUserMetadata() throws IOException {
-
         Map<String, String> addiontalMetadata = new TreeMap<>();
         addiontalMetadata.putIfAbsent("user", "sf");
         File file = new File(localFilePath2);
