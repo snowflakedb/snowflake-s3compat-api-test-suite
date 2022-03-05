@@ -49,20 +49,15 @@ public class S3CompatStorageClient implements StorageClient {
             @Nullable AWSCredentialsProvider awsCredentialsProvider,
             @Nullable String region,
             String endpoint) {
-        this.s3Client = createS3Client(region, awsCredentialsProvider, true, endpoint);
+        this.s3Client = createS3Client(region, awsCredentialsProvider, endpoint);
     }
 
     private AmazonS3 createS3Client(
             final @Nullable String region,
             final @Nullable AWSCredentialsProvider awsCredentialsProvide,
-            final boolean forceSigV4,
             final String endpoint) {
         ClientConfiguration clientCfg = new ClientConfiguration();
-        if (forceSigV4) {
-            clientCfg.withSignerOverride("AWSS3V4SignerType");
-        } else {
-            clientCfg.withSignerOverride("S3SignerType");
-        }
+        clientCfg.withSignerOverride("AWSS3V4SignerType");
         clientCfg.setMaxErrorRetry(MAX_ERROR_RETRY);
         clientCfg.withSocketTimeout(10_000);
         clientCfg.withTcpKeepAlive(true);
@@ -132,7 +127,7 @@ public class S3CompatStorageClient implements StorageClient {
         WriteObjectSpec writeObjectSpec = null;
         PutObjectResult putObjectResult = null;
         try {
-            writeObjectSpec = new WriteObjectSpec(bucketName, key + "/" + fileName, () -> new FileInputStream(file), file.length(), false, null, null);
+            writeObjectSpec = new WriteObjectSpec(bucketName, key + "/" + fileName, () -> new FileInputStream(file), file.length(), null, null);
             putObjectResult = putObject(writeObjectSpec);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -158,9 +153,6 @@ public class S3CompatStorageClient implements StorageClient {
                     new PutObjectRequest(writeObjectSpec.getBucketName(), writeObjectSpec.getFilePath(), writeObjectSpec.getInputStream(), meta);
             if (writeObjectSpec.getClientTimeoutInMs() != null && writeObjectSpec.getClientTimeoutInMs() > 0) {
                 request.setSdkClientExecutionTimeout(writeObjectSpec.getClientTimeoutInMs());
-            }
-            if (writeObjectSpec.isBucketOwnerFullControl()) {
-                request.setCannedAcl(CannedAccessControlList.BucketOwnerFullControl);
             }
             PutObjectResult putResult = this.s3Client.putObject(request);
             RemoteObjectMetadata objectMetadata = getObjectMetadata(writeObjectSpec.getBucketName(), writeObjectSpec.getFilePath(), putResult.getVersionId());

@@ -24,11 +24,7 @@ public class WriteObjectSpec {
     private final @NotNull InputStreamSupplier inputStreamSupplier;
     /** Additional blob metadata we may want to add */
     private Map<String, String> additionalBlobMetadata;
-    /**
-     * Whether to grant the bucket owner full control on the written object on put requests.
-     * https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-owner-access/
-     */
-    private final boolean bucketOwnerFullControl;
+
     /** Max execution time in ms. Null value implies default. */
     private final @Nullable Integer clientTimeoutInMs;
 
@@ -47,6 +43,7 @@ public class WriteObjectSpec {
      * @param filePath File path of the object to store.
      * @param contentsSupplier Supplier of a stream of data to write to remote storage.
      * @param contentLength Size of the contents stream.
+     * @param clientTimeoutInMs Timeout in ms for the client.
      * @throws IOException
      */
     public WriteObjectSpec(
@@ -54,7 +51,6 @@ public class WriteObjectSpec {
             String filePath,
             InputStreamSupplier contentsSupplier,
             long contentLength,
-            boolean bucketOwnerFullControl,
             @Nullable Integer clientTimeoutInMs,
             Map<String, String> additionalBlobMetadata) throws IOException {
         validateString(filePath, "objectName");
@@ -78,7 +74,6 @@ public class WriteObjectSpec {
         this.inputStreamSupplier = contentsSupplier;
         this.firstInputStream = inputStream;
         this.contentLengthToWrite = contentLength;
-        this.bucketOwnerFullControl = bucketOwnerFullControl;
         this.additionalBlobMetadata = additionalBlobMetadata;
         this.clientTimeoutInMs = clientTimeoutInMs;
     }
@@ -113,10 +108,6 @@ public class WriteObjectSpec {
      */
     public Map<String, String> getAdditionalBlobMetadata() {
         return additionalBlobMetadata;
-    }
-
-    public boolean isBucketOwnerFullControl() {
-        return bucketOwnerFullControl;
     }
 
     /**

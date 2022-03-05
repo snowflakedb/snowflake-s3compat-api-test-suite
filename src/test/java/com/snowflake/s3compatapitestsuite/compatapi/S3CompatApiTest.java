@@ -202,7 +202,6 @@ class S3CompatApiTest {
                 filePath /* filePath */,
                 () -> new FileInputStream(file) /* contentsSupplier */,
                 file.length() /* contentLength */,
-                false /* bucketOwnerFullControl */,
                 null /* clientTimeoutInMs */,
                 addiontalMetadata);
         clientWithRegion2.putObject(writeObjectSpec);
