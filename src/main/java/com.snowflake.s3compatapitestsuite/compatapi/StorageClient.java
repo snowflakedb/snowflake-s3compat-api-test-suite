@@ -39,6 +39,12 @@ public interface StorageClient {
      */
     void putObject(String bucketName, String key, String fileName) ;
     /**
+     * Write an object to a remote storage location per the spec.
+     * @param writeObjectSpec Wrapper for the information of the object to write.
+     * @return result of the writing operation.
+     */
+    PutObjectResult putObject(WriteObjectSpec writeObjectSpec);
+    /**
      * List all objects with given bucket name and prefix.
      * @param bucketName Name of the bucket.
      * @param prefix An optional parameter restricting the response to keys beginning with the specified prefix.
@@ -68,12 +74,19 @@ public interface StorageClient {
      */
     void deleteObject(String bucketName, String fileKey);
     /**
-     * Delete all the objects per the request.
+     * Delete all the objects per the list of delete objects.
      * @param bucketName The bucket name where the objects locate
      * @param toDeleteList A list of object spec (filename, versionId) to delete
      * @return The number of deleted objects.
      */
     int deleteObjects(String bucketName, List<DeleteRemoteObjectSpec> toDeleteList);
+    /**
+     * Delete all the objects under the prefix path.
+     * @param bucketName The bucket name where the objects locate
+     * @param prefixPath The prefix path where the objects stored.
+     * @return The number of deleted objects.
+     */
+    int deleteObjects(String bucketName, String prefixPath);
     /**
      * Copy all objects from srcPath to dstPath. It will copy all objects with srcPath as prefix in their key,
      * and replace srcPath in their full path with dstPath as the destination.
@@ -88,7 +101,7 @@ public interface StorageClient {
      * Sets the region for this client's service calls.
      * @param region The region this client will communicate with.
      */
-    void setRegion(Region region);
+    void setRegion(@Nullable String region);
     /**
      * Generate a pre-signed URL.
      * @param bucketName Bucket name.

@@ -115,20 +115,14 @@ public class S3CompatStorageClient implements StorageClient {
     @Override
     public void putObject(String bucketName, String key, String fileName) {
         final File file = new File(fileName);
-        WriteObjectSpec writeObjectSpec = null;
-        PutObjectResult putObjectResult = null;
         try {
-            writeObjectSpec = new WriteObjectSpec(bucketName, key + "/" + fileName, () -> new FileInputStream(file), file.length(), null, null);
-            putObjectResult = putObject(writeObjectSpec);
+            WriteObjectSpec writeObjectSpec = new WriteObjectSpec(bucketName, key + "/" + fileName, () -> new FileInputStream(file), file.length(), null /* timeoutInMs */, null);
+            putObject(writeObjectSpec);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    /**
-     * Write an object to a remote storage location.
-     * @param writeObjectSpec Wrapper for the information of the object to write.
-     * @return result of the writing operation.
-     */
+    @Override
     public PutObjectResult putObject(WriteObjectSpec writeObjectSpec) {
         ObjectMetadata meta = new ObjectMetadata();
         meta.setContentLength(writeObjectSpec.getContentLengthToWrite());
@@ -226,7 +220,6 @@ public class S3CompatStorageClient implements StorageClient {
             throw new RuntimeException(ex);
         }
     }
-
     private @NotNull List<S3ObjectSummary> fromV2ObjectListing(@NotNull ListObjectsV2Result listRes,
                                                                @NotNull ListObjectsV2Request listReq)
             throws UnsupportedEncodingException {
@@ -310,6 +303,20 @@ public class S3CompatStorageClient implements StorageClient {
         }
     }
     @Override
+    public int deleteObjects(String bucketName, String prefixPath) {
+        int numDeleted = 0;
+        try {
+            for (S3ObjectSummary file: this.s3Client.listObjects(bucketName, prefixPath).getObjectSummaries()) {
+                this.s3Client.deleteObject(bucketName, file.getKey());
+                numDeleted++;
+            }
+            logger.log(Level.INFO, "Client library call end: API deleteObject");
+        } catch (AmazonS3Exception ex) {
+            throw ex;
+        }
+        return numDeleted;
+    }
+    @Override
     public int deleteObjects(String bucketName, List<DeleteRemoteObjectSpec> toDeleteList){
         List<DeleteObjectsRequest.KeyVersion> kvList = new ArrayList<>(toDeleteList.size());
         if (toDeleteList.isEmpty()) {
@@ -342,9 +349,9 @@ public class S3CompatStorageClient implements StorageClient {
         }
     }
     @Override
-    public void setRegion(Region region) {
+    public void setRegion(@Nullable String region) {
          try {
-             this.s3Client.setRegion(region);
+             this.s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
          } catch (AmazonS3Exception ex) {
              throw ex;
          }
@@ -360,15 +367,6 @@ public class S3CompatStorageClient implements StorageClient {
             pg = pg.withContentType(contentType);
         }
         return pg.generate();
-    }
-    /**
-     * Generate a pre-signed url.
-     * @param bucketName Bucket name of the object where locates.
-     * @param key The file path.
-     * @return a pre-signed url for the file.
-     */
-    public String generatePresignedUrl(String bucketName, String key) {
-        return generatePresignedUrl(bucketName, key, -1, null);// use default expiry time
     }
     /**
      * Get the region name for the client.
