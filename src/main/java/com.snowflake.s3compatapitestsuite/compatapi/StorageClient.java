@@ -36,8 +36,9 @@ public interface StorageClient {
      * @param bucketName The name of an existing bucket, to which the new object will be uploaded.
      * @param key The key under which to store the new object.
      * @param fileName The name of the file to upload to Amazon S3.
+     * @return return the put object result
      */
-    void putObject(String bucketName, String key, String fileName) ;
+    PutObjectResult putObject(String bucketName, String key, String fileName) ;
     /**
      * Write an object to a remote storage location per the spec.
      * @param writeObjectSpec Wrapper for the information of the object to write.
@@ -55,9 +56,10 @@ public interface StorageClient {
      * List objects V2 by providing bucket name and prefix of the object.
      * @param bucketName Name of the bucket
      * @param prefix An optional parameter restricting the response to keys beginning with the specified prefix.
+     * @param maxKeys
      * @return list of objects summaries.
      */
-    List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix) ;
+    List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix, @Nullable Integer maxKeys) ;
     /**
      * List all versions in a location.
      *

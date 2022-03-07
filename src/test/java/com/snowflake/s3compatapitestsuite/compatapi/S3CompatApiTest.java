@@ -5,6 +5,7 @@ package com.snowflake.s3compatapitestsuite.compatapi;
 
 import com.amazonaws.auth.*;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3VersionSummary;
 import org.junit.jupiter.api.*;
@@ -36,7 +37,7 @@ class S3CompatApiTest {
     /** A non-existing bucket. */
     private static final String notExistingBucket = "sf-non-existing-bucket";
     /** A prefix under region {@value  bucketAtRegion1} */
-    private static final String prefixForBucketAtReg1 = "s3compatapi/tests";
+    private static final String prefixForBucketAtReg1 = "test-suite/ops";
     /** A local file for testing.*/
     private static final String localFilePath1 = "src/resources/test1.txt";
     /** A second local file for testing. */
@@ -54,7 +55,7 @@ class S3CompatApiTest {
     private static final String region1 = "";
     /** Another region that is different from region {@value  region1}. eg: "us-west-2" */
     private static final String region2 = "";
-    /** A bucket locates at region {@value  region1}. */
+    /** A bucket locates at region {@value  region1}. This bucket should have bucket versioning enabled. */
     private static final String bucketAtRegion1 = "";
     /** A bucket locates at region {@value  region2}. The bucket corresponds to S3 bucket. */
     private static final String bucketAtRegion2 = "";
@@ -133,6 +134,12 @@ class S3CompatApiTest {
                 403 /* expectedStatusCode */,
                 "AccessDenied" /* expectedErrorCode */,
                 "Access Denied");
+        // Negative test: invalid bucket name.
+        TestUtils.functionCallThrowsException(() -> clientWithRegion1.getBucketLocation("invalid bucket name"),
+                400 /* expectedStatusCode */,
+                "InvalidBucketName" /* expectedErrorCode */,
+                "The specified bucket is not valid.");
+
         // Set the region back for later testing
         clientWithRegion1.setRegion(region1);
         clientWithRegion2.setRegion(region2);
@@ -246,11 +253,23 @@ class S3CompatApiTest {
     @Test
     void getObjectMetadata() throws Exception {
         updatePrefixForTestCase(TestUtils.OPERATIONS.GET_OBJECT_METADATA);
-        uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, localFilePath1);
+        // Put an object to remote location for testing
+        PutObjectResult putObjectResult1 = uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, localFilePath1);
         File file = new File(localFilePath1);
         String filePath = prefix + "/" + localFilePath1;
-        RemoteObjectMetadata mt = getObjectMetadata(clientWithRegion1, bucketAtRegion1, filePath);
-        Assertions.assertEquals(file.length(), mt.getObjectContentLength());
+        // Test getObjectMetadata without provide a version id
+        RemoteObjectMetadata mt1 = getObjectMetadata(clientWithRegion1, bucketAtRegion1, filePath);
+        Assertions.assertEquals(file.length(), mt1.getObjectContentLength());
+        Assertions.assertEquals(putObjectResult1.getVersionId(), mt1.getObjectVersionId());
+        // Test getObjectMetadata by provide a version id
+        RemoteObjectMetadata mt2 = clientWithRegion1.getObjectMetadata(bucketAtRegion1, filePath, putObjectResult1.getVersionId());
+        Assertions.assertEquals(putObjectResult1.getVersionId(), mt2.getObjectVersionId());
+        // Put the file to the remote location will generate a new version id
+        PutObjectResult putObjectResult2 = uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, localFilePath1);
+        RemoteObjectMetadata mt3 = getObjectMetadata(clientWithRegion1, bucketAtRegion1, filePath);
+        Assertions.assertEquals(putObjectResult2.getVersionId(), mt3.getObjectVersionId());
+        // The current version id should not be equals to the previous one
+        Assertions.assertNotEquals(mt3.getObjectVersionId(), putObjectResult1.getVersionId());
         // Negative test: provide wrong version id
         TestUtils.functionCallThrowsException(() -> clientWithRegion1.getObjectMetadata(bucketAtRegion1, filePath, "NonExistingVersion"),
                 400 /* expectedStatusCode */,
@@ -261,13 +280,12 @@ class S3CompatApiTest {
                 404 /* expectedStatusCode */,
                 "404 Not Found" /* expectedErrorCode */,
                 "Not Found" /* expectedRegionFromExceptionMsg */);
-        // TODO: add a test for getting with version id
     }
     private RemoteObjectMetadata getObjectMetadata(StorageClient client, String bucketName, String key) {
         return client.getObjectMetadata(bucketName, key, null /* versionId*/);
     }
     @Test
-    void listObjects() throws IOException {
+    void listObjects() {
         updatePrefixForTestCase(TestUtils.OPERATIONS.LIST_OBJECTS);
         // Upload files to make sure later listing as expected.
         List<String> filesToUpload = Arrays.asList(localFilePath1, localFilePath2);
@@ -279,14 +297,14 @@ class S3CompatApiTest {
         Assertions.assertEquals(pageListingTotalSize, clientWithRegion1.listObjects(bucketAtRegion1, prefixForPageListingAtReg1).size());
     }
     @Test
-    void listObjectsV2() throws IOException {
+    void listObjectsV2() {
         updatePrefixForTestCase(TestUtils.OPERATIONS.LIST_OBJECTS_V2);
         // Upload files to make sure listing as expected.
         List<String> filesToUpload = Arrays.asList(localFilePath1, localFilePath2);
         for (String file: filesToUpload) {
             uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, file);
         }
-        Assertions.assertEquals(filesToUpload.size(), clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix).size());
+        Assertions.assertEquals(filesToUpload.size(), clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix, null /* maxKeys */).size());
         testPageListing();
     }
     void testPageListing() {
@@ -294,8 +312,10 @@ class S3CompatApiTest {
         if (pageListingTotalSize <= 1000) {
             Assertions.fail("Expect to list over 1000 files.");
         }
-        System.out.println(bucketAtRegion1 + "/" + prefixForPageListingAtReg1);
-        Assertions.assertEquals(pageListingTotalSize, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefixForPageListingAtReg1).size());
+        Assertions.assertEquals(pageListingTotalSize, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefixForPageListingAtReg1, null /* maxKeys */).size());
+        // Test list with max keys specified
+        int maxKeys = 300;
+        Assertions.assertEquals(pageListingTotalSize, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefixForPageListingAtReg1, maxKeys).size());
     }
     @Test
     void listVersions() {
@@ -321,22 +341,24 @@ class S3CompatApiTest {
         updatePrefixForTestCase(TestUtils.OPERATIONS.DELETE_OBJECT);
         // Upload a file to make sure to delete the target.
         uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, localFilePath1);
-        Assertions.assertEquals(1, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix).size());
+        Assertions.assertEquals(1, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix, null /* maxKeys */).size());
         clientWithRegion1.deleteObject(bucketAtRegion1, prefix + "/" + localFilePath1);
-        Assertions.assertTrue(clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix).isEmpty());
+        Assertions.assertTrue(clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix, null /* maxKeys */).isEmpty());
     }
     @Test
     void deleteObjects() throws Exception {
         updatePrefixForTestCase(TestUtils.OPERATIONS.DELETE_OBJECTS);
         // Put files into the location for testing delete
         // Upload files to make sure listing as expected.
-        List<String> filesToUpload = Arrays.asList(localFilePath1, localFilePath2);
-        for (String file: filesToUpload) {
+        List<String> files = Arrays.asList(localFilePath1, localFilePath2);
+        for (String file: files) {
             uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, file);
         }
-        // ensure files are at the location
-        Assertions.assertEquals(filesToUpload.size(), clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix).size());
-        DeleteRemoteObjectSpec objectWithWrongVersion = new DeleteRemoteObjectSpec(prefix + "/" + localFilePath1, "versionId");
+        String key1 = prefix + "/" + localFilePath1;
+        String key2 = prefix + "/" + localFilePath2;
+        // Ensure files uploaded to  the location for testing.
+        Assertions.assertEquals(files.size(), clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix, null /* maxKeys */).size());
+        DeleteRemoteObjectSpec objectWithWrongVersion = new DeleteRemoteObjectSpec(key1, "versionId");
         List<DeleteRemoteObjectSpec> toDelete = new ArrayList<>();
         toDelete.add(objectWithWrongVersion);
         // Delete fails as object is provided with a wrong version id, will receive MultiObjectDeleteException
@@ -344,28 +366,34 @@ class S3CompatApiTest {
                 200 /* expectedStatusCode */,
                 null /* expectedErrorCode */,
                 null /* expectedRegionFromExceptionMsg */);
-        // TODO: should add one more case: provide a version id for the object to delete
         toDelete.remove(0);// remove the one with wrong version id
-        for (String file: filesToUpload) {
-            toDelete.add(new DeleteRemoteObjectSpec(prefix + "/" + file));
-        }
+        // To delete an object without providing version id
+        toDelete.add(new DeleteRemoteObjectSpec(key1));
+        // To delete an object by providing version id
+        toDelete.add(new DeleteRemoteObjectSpec(key2, getObjectMetadata(clientWithRegion1, bucketAtRegion1, key2 ).getObjectVersionId()));
         Assertions.assertEquals(toDelete.size(), clientWithRegion1.deleteObjects(bucketAtRegion1, toDelete));
         // Listing should return 0 at the prefix since files have been deleted.
-        Assertions.assertEquals(0, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix).size());
+        Assertions.assertEquals(0, clientWithRegion1.listObjectsV2(bucketAtRegion1, prefix, null /* maxKeys */).size());
     }
     @Test
     void copyObject() throws IOException {
         updatePrefixForTestCase(TestUtils.OPERATIONS.COPY_OBJECT);
         // put a file at the location for copy
-        uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, localFilePath1);
+        PutObjectResult putObjectResult = uploadAnObjectToTestingLocation(clientWithRegion1, bucketAtRegion1, localFilePath1);
         String sourceFileName = prefix + "/" + localFilePath1;
         String dstFileName = "dst_" + sourceFileName;
-        // TODO: should update a test to copy with version id
+        // Copy without providing version id
         clientWithRegion1.copyObject(bucketAtRegion1, sourceFileName, null, bucketAtRegion1, dstFileName );
-        RemoteObjectMetadata dst = getObjectMetadata(clientWithRegion1, bucketAtRegion1, dstFileName);
+        RemoteObjectMetadata dstMt1 = getObjectMetadata(clientWithRegion1, bucketAtRegion1, dstFileName);
         RemoteObjectMetadata source = getObjectMetadata(clientWithRegion1, bucketAtRegion1, sourceFileName);
-        Assertions.assertEquals(source.getObjectContentLength(), dst.getObjectContentLength());
-        Assertions.assertEquals(source.getObjectETag(), dst.getObjectETag());
+        Assertions.assertEquals(source.getObjectContentLength(), dstMt1.getObjectContentLength());
+        Assertions.assertEquals(source.getObjectETag(), dstMt1.getObjectETag());
+        // Copy providing version id
+        String dstFileName2 = "dst2_" + sourceFileName;
+        clientWithRegion1.copyObject(bucketAtRegion1, sourceFileName, null, bucketAtRegion1, dstFileName2 );
+        RemoteObjectMetadata dstMt2 = getObjectMetadata(clientWithRegion1, bucketAtRegion1, dstFileName2);
+        Assertions.assertNotEquals(dstMt1.getObjectVersionId(), dstMt2.getObjectVersionId());
+        Assertions.assertEquals(dstMt1.getObjectETag(), dstMt2.getObjectETag());
     }
     @Test
     void generatePresignedUrl() {
@@ -417,7 +445,7 @@ class S3CompatApiTest {
     /**
      * Upload a file to a remote location with prefix {@value prefix} under a bucket, the prefix is updated for each test.
      */
-    private void uploadAnObjectToTestingLocation(StorageClient client, String bucket, String fileName) {
-        client.putObject(bucket, prefix, fileName);
+    private PutObjectResult uploadAnObjectToTestingLocation(StorageClient client, String bucket, String fileName) {
+        return client.putObject(bucket, prefix, fileName);
     }
 }

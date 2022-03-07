@@ -113,14 +113,17 @@ public class S3CompatStorageClient implements StorageClient {
         return getObjectMetadata(bucketName, filePath, null);
     }
     @Override
-    public void putObject(String bucketName, String key, String fileName) {
+    public PutObjectResult putObject(String bucketName, String key, String fileName) {
         final File file = new File(fileName);
+        PutObjectResult res;
         try {
             WriteObjectSpec writeObjectSpec = new WriteObjectSpec(bucketName, key + "/" + fileName, () -> new FileInputStream(file), file.length(), null /* timeoutInMs */, null);
-            putObject(writeObjectSpec);
+            res = putObject(writeObjectSpec);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return res;
     }
     @Override
     public PutObjectResult putObject(WriteObjectSpec writeObjectSpec) {
@@ -204,14 +207,17 @@ public class S3CompatStorageClient implements StorageClient {
         return s3Summaries;
     }
     @Override
-    public List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix) {
+    public List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix, @Nullable Integer maxKeys) {
         ListObjectsV2Request listV2Req = new ListObjectsV2Request();
         listV2Req = listV2Req.withBucketName(bucketName);
         listV2Req = listV2Req.withPrefix(prefix);
+        if (maxKeys != null) {
+            listV2Req.withMaxKeys(maxKeys);
+        }
         try {
             ListObjectsV2Result listV2Res = this.s3Client.listObjectsV2(listV2Req);
             List<S3ObjectSummary> s3ObjectSummaries = fromV2ObjectListing(listV2Res, listV2Req);
-            while (listV2Res.getNextContinuationToken() != null) {
+            while (listV2Res.getNextContinuationToken() != null && listV2Res.isTruncated()) {
                 listV2Res = this.s3Client.listObjectsV2(listV2Req);
                 s3ObjectSummaries.addAll(fromV2ObjectListing(listV2Res, listV2Req));
             }
@@ -294,10 +300,7 @@ public class S3CompatStorageClient implements StorageClient {
     @Override
     public void deleteObject(String bucketName, String fileKey) {
         try {
-            for (S3ObjectSummary file: this.s3Client.listObjects(bucketName, fileKey).getObjectSummaries()) {
-                this.s3Client.deleteObject(bucketName, file.getKey());
-            }
-            logger.log(Level.INFO, "Client library call end: API deleteObject");
+            this.s3Client.deleteObject(bucketName, fileKey);
         } catch (AmazonS3Exception ex) {
             throw ex;
         }
@@ -310,7 +313,6 @@ public class S3CompatStorageClient implements StorageClient {
                 this.s3Client.deleteObject(bucketName, file.getKey());
                 numDeleted++;
             }
-            logger.log(Level.INFO, "Client library call end: API deleteObject");
         } catch (AmazonS3Exception ex) {
             throw ex;
         }

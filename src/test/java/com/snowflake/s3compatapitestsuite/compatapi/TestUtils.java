@@ -19,8 +19,8 @@ public class TestUtils {
         try {
             cbt.invoke();
         } catch (AmazonS3Exception ex) {
-            Assertions.assertEquals(ex.getStatusCode(), expectedStatusCode);
-            Assertions.assertEquals(ex.getErrorCode(), expectedErrorCode);
+            Assertions.assertEquals(expectedStatusCode, ex.getStatusCode());
+            Assertions.assertEquals(expectedErrorCode, ex.getErrorCode());
             Assertions.assertNotNull(ex.getRequestId());
             // error message does not need to exactly like aws response
             // Assertions.assertEquals(expectedMsg, ex.getErrorMessage());
