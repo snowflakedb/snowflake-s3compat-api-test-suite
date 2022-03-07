@@ -11,6 +11,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.*;
+import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Wrapper for a S3Compat storage client.
@@ -375,5 +377,33 @@ public class S3CompatStorageClient implements StorageClient {
      */
     public String getRegionName() {
         return this.s3Client.getRegionName();
+    }
+
+    /** A utility class to help keep track of the time taken by a request. */
+    protected static class RequestTimer implements AutoCloseable {
+        /** Start time (ms) */
+        private final @NotNull Stopwatch stopwatch;
+
+        /** Total time taken (ms) */
+        private long timeTakenMs;
+
+        RequestTimer() {
+            stopwatch = Stopwatch.createStarted();
+        }
+
+        @Override
+        public void close() {
+            stopwatch.stop();
+            timeTakenMs = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        }
+
+        /**
+         * Get the time taken (ms) by request to finish.
+         *
+         * @return time taken
+         */
+        long getTimeTakenMs() {
+            return timeTakenMs;
+        }
     }
 }
