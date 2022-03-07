@@ -1,0 +1,91 @@
+{
+  "operation" : "GET_BUCKET_LOCATION",
+  "timeTakenMs" : 45,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : null,
+  "contentLengthOrListSize" : null
+}
+{
+  "operation" : "GET_OBJECT_METADATA",
+  "timeTakenMs" : 26,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/test1.txt",
+  "contentLengthOrListSize" : 31
+}
+{
+  "operation" : "GET_OBJECT",
+  "timeTakenMs" : 45,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/test1.txt",
+  "contentLengthOrListSize" : 31
+}
+{
+  "operation" : "PUT_OBJECT",
+  "timeTakenMs" : 146,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/test1.txt",
+  "contentLengthOrListSize" : 31
+}
+{
+  "operation" : "COPY_OBJECT",
+  "timeTakenMs" : 77,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/test1.txt",
+  "contentLengthOrListSize" : null
+}
+{
+  "operation" : "LIST_OBJECTS_V2",
+  "timeTakenMs" : 42,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat",
+  "contentLengthOrListSize" : 2
+}
+{
+  "operation" : "LIST_VERSIONS",
+  "timeTakenMs" : 598,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/test1.txt",
+  "contentLengthOrListSize" : 2000
+}
+{
+  "operation" : "DELETE_OBJECT",
+  "timeTakenMs" : 41,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/test1.txt",
+  "contentLengthOrListSize" : null
+}
+{
+  "operation" : "DELETE_OBJECTS",
+  "timeTakenMs" : 99,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat",
+  "contentLengthOrListSize" : 1
+}
+{
+  "operation" : "PUT_OBJECT",
+  "timeTakenMs" : 318185,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/src/resources/largeFile.txt",
+  "contentLengthOrListSize" : 5368709120
+}
+{
+  "operation" : "LIST_OBJECTS_V2",
+  "timeTakenMs" : 643,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/data",
+  "contentLengthOrListSize" : 3001
+}
+{
+  "operation" : "LIST_VERSIONS",
+  "timeTakenMs" : 515,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/versions/src/resources/test1.txt",
+  "contentLengthOrListSize" : 2000
+}
+{
+  "operation" : "DELETE_OBJECTS",
+  "timeTakenMs" : 31252,
+  "bucketName" : "s3compat-api-test",
+  "fileKey" : "test-suite/perfstat/deleteFiles",
+  "contentLengthOrListSize" : 627
+}

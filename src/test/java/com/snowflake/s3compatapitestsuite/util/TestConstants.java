@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
+ */
 package com.snowflake.s3compatapitestsuite.util;
 
 public class TestConstants {
@@ -11,6 +14,10 @@ public class TestConstants {
     public static final String LOCAL_FILE_PATH_2 = "src/resources/test2.json";
     /** A third file name for testing. */
     public static final String LARGE_FILE_NAME = "src/resources/largeFile.txt";
+    /** A prefix under under bucket {@value  BUCKET_AT_REGION_1}*/
+    public static final String PERFSTAT_PREFIX = "test-suite/perfstat";
+    /** A local file for collecting perf stat.*/
+    public static final String PERF_REPORT = "src/resources/perf_report.txt";
     /**
      * *******************************************************************
      * *********** Please fill in below values for testing. **************

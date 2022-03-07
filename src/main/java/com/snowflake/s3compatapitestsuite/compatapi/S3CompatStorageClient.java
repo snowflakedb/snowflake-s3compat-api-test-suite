@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
  */
+package com.snowflake.s3compatapitestsuite.compatapi;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
@@ -11,7 +12,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.*;
-import com.google.common.base.Stopwatch;
+import com.snowflake.s3compatapitestsuite.perfStats.OperationStat;
+import com.snowflake.s3compatapitestsuite.perfStats.OperationStat.OPERATIONS;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +27,6 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Wrapper for a S3Compat storage client.
@@ -37,6 +38,9 @@ public class S3CompatStorageClient implements StorageClient {
     private static final String ENCODING = "UTF-8";
     /** Configurable value to use for the max error retry configuration when creating an S3 client. */
     private static final int MAX_ERROR_RETRY = 5;
+    /** A stat builder for collecting operation stats. */
+    private static OperationStat.Builder statBuilder = null;
+    private static OperationStat operationStats;
     /**
      * Constructor for a s3 compat storage client.
      * @param awsCredentialsProvider Wrapper for aws credential.
@@ -70,7 +74,7 @@ public class S3CompatStorageClient implements StorageClient {
     @Override
     public String getBucketLocation(String bucketName) {
         String regionRes;
-        try {
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.GET_BUCKET_LOCATION, null /* filePath */)) {
             regionRes = this.s3Client.getBucketLocation(bucketName);
         } catch (AmazonS3Exception ex) {
             if (ex.getAdditionalDetails() != null) {
@@ -81,37 +85,48 @@ public class S3CompatStorageClient implements StorageClient {
                 }
             }
             throw ex;
+        } finally {
+            generateStat();
         }
         return regionRes;
     }
     @Override
     public S3Object getObject(String bucketName, String key) {
-        try {
+        S3Object result = null;
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.GET_OBJECT, key /* filePath */)) {
             GetObjectRequest request = new GetObjectRequest(bucketName, key);
             if (CLIENT_TIMEOUT_FOR_READ > 0) {
                 request.setSdkClientExecutionTimeout(CLIENT_TIMEOUT_FOR_READ);
             }
-            return this.s3Client.getObject(request);
+            result = this.s3Client.getObject(request);
         } catch (AmazonS3Exception | IllegalArgumentException ex) {
             throw ex;
+        } finally {
+            if (result != null) {
+                statBuilder.withContentLengthOrListSize(result.getObjectMetadata().getContentLength());
+            }
+            generateStat();
         }
+        return result;
     }
     @Override
-    public RemoteObjectMetadata getObjectMetadata(String bucketName, String key, @Nullable String versionId) throws AmazonS3Exception{
+    public RemoteObjectMetadata getObjectMetadata(String bucketName, String key, @Nullable String versionId) {
         GetObjectMetadataRequest objectMetadataRequest = new GetObjectMetadataRequest(bucketName, key);
         if (versionId != null ) {
             objectMetadataRequest.setVersionId(versionId);
         }
-        return RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
-    }
-    /**
-     * Get metadata of an object.
-     * @param bucketName Bucket name where the object locates.
-     * @param filePath path of a file .
-     * @return Metadata of the object.
-     */
-    public RemoteObjectMetadata getObjectMetadata(String bucketName, String filePath) {
-        return getObjectMetadata(bucketName, filePath, null);
+        ObjectMetadata objectMetadata = null;
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.GET_OBJECT_METADATA, key)) {
+            objectMetadata = this.s3Client.getObjectMetadata(objectMetadataRequest);
+        } catch (AmazonS3Exception ex) {
+            throw ex;
+        } finally {
+            if (objectMetadata != null) {
+                statBuilder.withContentLengthOrListSize(objectMetadata.getContentLength());
+            }
+            generateStat();
+        }
+        return RemoteObjectMetadata.fromS3ObjectMetadata(objectMetadata);
     }
     @Override
     public PutObjectResult putObject(String bucketName, String key, String fileName) {
@@ -120,7 +135,6 @@ public class S3CompatStorageClient implements StorageClient {
         try {
             WriteObjectSpec writeObjectSpec = new WriteObjectSpec(bucketName, key + "/" + fileName, () -> new FileInputStream(file), file.length(), null /* timeoutInMs */, null);
             res = putObject(writeObjectSpec);
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -136,29 +150,34 @@ public class S3CompatStorageClient implements StorageClient {
             }
             writeObjectSpec.getAdditionalBlobMetadata().forEach((key, value) -> meta.getUserMetadata().put(key, value));
         }
-        try {
+        PutObjectResult putResult = null;
+        try (OperationStat.Builder builder = startCollectStat(writeObjectSpec.getBucketName(), OPERATIONS.PUT_OBJECT, writeObjectSpec.getFilePath());) {
             PutObjectRequest request =
                     new PutObjectRequest(writeObjectSpec.getBucketName(), writeObjectSpec.getFilePath(), writeObjectSpec.getInputStream(), meta);
             if (writeObjectSpec.getClientTimeoutInMs() != null && writeObjectSpec.getClientTimeoutInMs() > 0) {
                 request.setSdkClientExecutionTimeout(writeObjectSpec.getClientTimeoutInMs());
             }
-            PutObjectResult putResult = this.s3Client.putObject(request);
-            RemoteObjectMetadata objectMetadata = getObjectMetadata(writeObjectSpec.getBucketName(), writeObjectSpec.getFilePath(), putResult.getVersionId());
-            if (putResult == null) {
-                throw new RuntimeException("Put Object result should not be null! ");
-            }
-            if (putResult.getVersionId() != null && !putResult.getVersionId().equalsIgnoreCase(objectMetadata.getObjectVersionId())) {
-                throw new RuntimeException("Version id not match a read after write.");
-            } else {
-                logger.log(Level.INFO, "Put " + objectMetadata.getObjectContentLength() + " bytes to remote location " + writeObjectSpec.getBucketName() + "/" + writeObjectSpec.getFilePath());
-            }
-            return putResult;
+            putResult = this.s3Client.putObject(request);
         } catch (AmazonS3Exception ex) {
             throw ex;
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            statBuilder.withContentLengthOrListSize(writeObjectSpec.getContentLengthToWrite());
+            generateStat();
         }
-        throw new RuntimeException("Fail to putObject:" + writeObjectSpec.getFilePath());
+        if (putResult == null) {
+            throw new RuntimeException("Put Object result should not be null! ");
+        }
+        // Verify that the put is successful.
+        GetObjectMetadataRequest mtReq =  new GetObjectMetadataRequest(writeObjectSpec.getBucketName(), writeObjectSpec.getFilePath(), putResult.getVersionId());
+        ObjectMetadata objectMetadata = this.s3Client.getObjectMetadata(mtReq);
+        if (putResult.getVersionId() != null && !putResult.getVersionId().equalsIgnoreCase(objectMetadata.getVersionId())) {
+            throw new RuntimeException("Version id not match a read after write.");
+        } else {
+            logger.log(Level.INFO, "Put " + objectMetadata.getContentLength() + " bytes to remote location " + writeObjectSpec.getBucketName() + "/" + writeObjectSpec.getFilePath());
+        }
+        return putResult;
     }
     @Override
     public List<S3ObjectSummary> listObjects(String bucketName, String prefix) {
@@ -215,9 +234,10 @@ public class S3CompatStorageClient implements StorageClient {
         if (maxKeys != null) {
             listV2Req.withMaxKeys(maxKeys);
         }
-        try {
+        List<S3ObjectSummary> s3ObjectSummaries = new ArrayList<>();
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.LIST_OBJECTS_V2, prefix)) {
             ListObjectsV2Result listV2Res = this.s3Client.listObjectsV2(listV2Req);
-            List<S3ObjectSummary> s3ObjectSummaries = fromV2ObjectListing(listV2Res, listV2Req);
+            s3ObjectSummaries = fromV2ObjectListing(listV2Res, listV2Req);
             while (listV2Res.getNextContinuationToken() != null && listV2Res.isTruncated()) {
                 listV2Res = this.s3Client.listObjectsV2(listV2Req);
                 s3ObjectSummaries.addAll(fromV2ObjectListing(listV2Res, listV2Req));
@@ -225,6 +245,9 @@ public class S3CompatStorageClient implements StorageClient {
             return s3ObjectSummaries;
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            statBuilder.withContentLengthOrListSize(s3ObjectSummaries.size());
+            generateStat();
         }
     }
     private @NotNull List<S3ObjectSummary> fromV2ObjectListing(@NotNull ListObjectsV2Result listRes,
@@ -254,8 +277,8 @@ public class S3CompatStorageClient implements StorageClient {
     }
     @Override
     public List<S3VersionSummary> listVersions(String bucketName, String key, boolean useUrlEncoding) {
-        List<S3VersionSummary> versionSum = null;
-        try {
+        List<S3VersionSummary> versionSum = new ArrayList<>();
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.LIST_VERSIONS, key)) {
             ListVersionsRequest listVersionsReq = new ListVersionsRequest();
             listVersionsReq.withBucketName(bucketName);
             listVersionsReq.withPrefix(key);
@@ -270,12 +293,14 @@ public class S3CompatStorageClient implements StorageClient {
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+        } finally {
+            statBuilder.withContentLengthOrListSize(versionSum.size());
+            generateStat();
         }
         return versionSum;
     }
     private @NotNull List<S3VersionSummary> fromListVersions(@NotNull VersionListing vl) throws UnsupportedEncodingException {
         String encodingType = vl.getEncodingType();
-
         boolean truncated = vl.isTruncated();
         int pageSize = vl.getMaxKeys();
         String bucketName = vl.getBucketName();
@@ -300,22 +325,27 @@ public class S3CompatStorageClient implements StorageClient {
     }
     @Override
     public void deleteObject(String bucketName, String fileKey) {
-        try {
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.DELETE_OBJECT, fileKey)){
             this.s3Client.deleteObject(bucketName, fileKey);
         } catch (AmazonS3Exception ex) {
             throw ex;
+        } finally {
+            generateStat();
         }
     }
     @Override
     public int deleteObjects(String bucketName, String prefixPath) {
         int numDeleted = 0;
-        try {
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.DELETE_OBJECTS, prefixPath)){
             for (S3ObjectSummary file: this.s3Client.listObjects(bucketName, prefixPath).getObjectSummaries()) {
                 this.s3Client.deleteObject(bucketName, file.getKey());
                 numDeleted++;
             }
         } catch (AmazonS3Exception ex) {
             throw ex;
+        } finally {
+            statBuilder.withContentLengthOrListSize(numDeleted);
+            generateStat();
         }
         return numDeleted;
     }
@@ -328,14 +358,23 @@ public class S3CompatStorageClient implements StorageClient {
         for (DeleteRemoteObjectSpec objectSpec: toDeleteList) {
             kvList.add(objectSpec.toS3KeyVersion());
         }
-        try {
+        DeleteObjectsResult result = null;
+        int res = 0;
+        try (OperationStat.Builder builder = startCollectStat(bucketName, OPERATIONS.DELETE_OBJECTS, null)) {
             DeleteObjectsRequest dor = new DeleteObjectsRequest(bucketName);
             dor.setKeys(kvList);
-            DeleteObjectsResult result = this.s3Client.deleteObjects(dor);
-            return result.getDeletedObjects().size();
+            startCollectStat(bucketName, OPERATIONS.DELETE_OBJECTS, null);
+            result = this.s3Client.deleteObjects(dor);
+            res = result.getDeletedObjects().size();
         } catch (AmazonClientException ex) {
             throw ex;
+        } finally {
+            if (result != null) {
+                statBuilder.withContentLengthOrListSize(result.getDeletedObjects().size());
+            }
+            generateStat();
         }
+        return res;
     }
     @Override
     public void copyObject(String sourceBucket, String sourceKey, @Nullable String sourceFileVersionId, String dstBucket, String destKey) {
@@ -345,10 +384,12 @@ public class S3CompatStorageClient implements StorageClient {
         } else {
             cpReq = new CopyObjectRequest(sourceBucket, sourceKey, dstBucket, destKey);
         }
-        try {
+        try (OperationStat.Builder builder = startCollectStat(sourceBucket, OPERATIONS.COPY_OBJECT, sourceKey)){
             this.s3Client.copyObject(cpReq);
         } catch (AmazonS3Exception ex) {
             throw ex;
+        } finally {
+            generateStat();
         }
     }
     @Override
@@ -369,7 +410,10 @@ public class S3CompatStorageClient implements StorageClient {
         if (contentType != null) {
             pg = pg.withContentType(contentType);
         }
-        return pg.generate();
+        startCollectStat(bucketName, OPERATIONS.GENERATE_PRESIGNED_URL, key);
+        String url = pg.generate();
+        generateStat();
+        return url;
     }
     /**
      * Get the region name for the client.
@@ -378,32 +422,24 @@ public class S3CompatStorageClient implements StorageClient {
     public String getRegionName() {
         return this.s3Client.getRegionName();
     }
-
-    /** A utility class to help keep track of the time taken by a request. */
-    protected static class RequestTimer implements AutoCloseable {
-        /** Start time (ms) */
-        private final @NotNull Stopwatch stopwatch;
-
-        /** Total time taken (ms) */
-        private long timeTakenMs;
-
-        RequestTimer() {
-            stopwatch = Stopwatch.createStarted();
+    private OperationStat.Builder startCollectStat(String bucketName, OPERATIONS op, @Nullable String filePath) {
+        statBuilder = OperationStat.Builder.newInstance().withBucketName(bucketName).withOperation(op);
+        if (filePath != null) {
+            statBuilder.withFileKey(filePath);
         }
-
-        @Override
-        public void close() {
-            stopwatch.stop();
-            timeTakenMs = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-        }
-
-        /**
-         * Get the time taken (ms) by request to finish.
-         *
-         * @return time taken
-         */
-        long getTimeTakenMs() {
-            return timeTakenMs;
-        }
+        return statBuilder;
+    }
+    /**
+     * Generate the operation stat.
+     */
+    private void generateStat() {
+        operationStats = statBuilder.build();
+    }
+    /**
+     * Flush the stat, which is to write the stat into a report.
+     * @param fileName
+     */
+    public void flushStat(String fileName) {
+        operationStats.flush(fileName);
     }
 }

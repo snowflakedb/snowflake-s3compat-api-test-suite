@@ -6,6 +6,11 @@ package com.snowflake.s3compatapitestsuite.util;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import org.junit.jupiter.api.Assertions;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.concurrent.ThreadLocalRandom;
+
 public class TestUtils {
     /**
      * Expect exception from function call
@@ -30,6 +35,30 @@ public class TestUtils {
         }
         // Should be un-reachable
         throw new Exception("Unreachable code reached");
+    }
+
+    public static File generateFileWithSize(String fileName, long size) {
+        try {
+            File file = new File(fileName);
+            file.createNewFile();
+            RandomAccessFile raf = new RandomAccessFile(file, "rw");
+            raf.setLength(size);
+            raf.close();
+            return file;
+        } catch (IOException e) {
+            throw new RuntimeException("Generate File IOException: " + e);
+        }
+    }
+
+    /**
+     * Helper to obtain a random int value between specified bounds.
+     *
+     * @param lowerBound The minimum value to return (inclusive).
+     * @param upperBound The maximum value to return (exclusive).
+     * @return A random int within the specified range.
+     */
+    public static int getRandomInt(int lowerBound, int upperBound) {
+        return ThreadLocalRandom.current().nextInt(lowerBound, upperBound);
     }
 
     /**

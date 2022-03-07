@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
  */
+package com.snowflake.s3compatapitestsuite.compatapi;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;

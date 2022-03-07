@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
  */
+package com.snowflake.s3compatapitestsuite.compatapi;
 
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import org.jetbrains.annotations.NotNull;

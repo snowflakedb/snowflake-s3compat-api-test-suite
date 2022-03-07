@@ -176,11 +176,7 @@ class S3CompatApiTest {
     private void testPutLargeObjectUpTo5GB() throws Exception {
         updatePrefixForTestCase(TestUtils.OPERATIONS.PUT_OBJECT);
         long size_5GB = 5368709120L;
-        File file = new File(TestConstants.LARGE_FILE_NAME);
-        file.createNewFile();
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        raf.setLength(size_5GB);
-        raf.close();
+        File file = TestUtils.generateFileWithSize(TestConstants.LARGE_FILE_NAME, size_5GB);
         // Put the object, should success without error.
         clientWithRegion1.putObject(TestConstants.BUCKET_AT_REGION_1, prefix, TestConstants.LARGE_FILE_NAME);
         // Verify that the object is successfully put
