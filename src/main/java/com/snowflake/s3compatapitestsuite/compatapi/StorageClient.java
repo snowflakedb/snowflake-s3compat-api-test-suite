@@ -5,7 +5,7 @@ package com.snowflake.s3compatapitestsuite.compatapi;
 
 import com.amazonaws.services.s3.model.*;
 import org.jetbrains.annotations.Nullable;
-import com.amazonaws.regions.Region;
+
 import java.util.List;
 
 /** Interface representing a storage client. */
