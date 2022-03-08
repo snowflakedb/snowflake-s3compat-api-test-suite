@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
  */
-package com.snowflake.s3compatapitestsuite.compatapi;
+package com.snowflake.s3compatapitestsuite.util;
 
 /**
  * Interface for code block to throw exception.

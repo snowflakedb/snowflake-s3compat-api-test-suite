@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
  */
-package com.snowflake.s3compatapitestsuite.compatapi;
+package com.snowflake.s3compatapitestsuite.util;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import org.junit.jupiter.api.Assertions;
