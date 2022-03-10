@@ -1,13 +1,28 @@
-## Readme file
+## Snowflake S3Compat API Test Suite.
 
-This Repo is a S3Compat API Test Suite.
+This is a test suite for S3Compat API used in Snowflake.
+
 For any issue please contact shannon.chen@snowflake.com
 
-Formatting help can be found at [github](https://help.github.com/en/github/writing-on-github/basic-writing-and-formatting-syntax)
+## Private repositories
+We will make it public after implementation, security, legal review is done.
 
-## Requirements for private repositories
-
-This repository is intended to be private during implementation, please see the [CM requirements](https://snowflakecomputing.atlassian.net/wiki/spaces/~367958958/pages/671909031/Creating+a+new+repository).
-We will make it public after impl is done and then we would update this Readme file.
+## List of S3Compat APIs
+Below is the list of APIs called in this repo:
+```
+getBucketLocation
+getObject
+getObjectMetadata
+putObject
+listObjects
+listObjectsV2
+listNextBatchOfObjects
+listVersions
+deleteObject
+deleteObjects
+copyObject
+setRegion
+generatePresignedUrl
+```
 
 
