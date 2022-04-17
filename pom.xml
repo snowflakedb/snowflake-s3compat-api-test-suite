@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.62</version>
+            <version>1.12.152</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
