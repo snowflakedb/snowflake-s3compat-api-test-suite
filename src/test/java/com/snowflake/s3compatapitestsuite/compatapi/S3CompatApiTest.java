@@ -32,15 +32,14 @@ class S3CompatApiTest {
     private static StorageClient clientWithInvalidSecret;
     /** A client created without providing any credentials. */
     private static StorageClient clientWithNoCredentials;
-    /** AWS credentials. The credentials should be set following aws guide here
-     * https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
-     * */
+    /** AWS credentials. */
     private static AWSCredentialsProvider credentialsProvider;
     /** A prefix will be updated for each test. */
     private static String prefix = "";
     @BeforeAll
-    public static void setupBase() {
-        credentialsProvider = new EnvironmentVariableCredentialsProvider();
+    public static void setupBase() throws RuntimeException{
+        TestConstants.setUpParameterValues();
+        credentialsProvider = new AWSStaticCredentialsProvider(new BasicAWSCredentials(TestConstants.ACCESS_KEY, TestConstants.SECRET_KEY));
         BasicAWSCredentials wrongKeyId = new BasicAWSCredentials("invalid_access_key_id", credentialsProvider.getCredentials().getAWSSecretKey());
         BasicAWSCredentials wrongSecret = new BasicAWSCredentials(credentialsProvider.getCredentials().getAWSAccessKeyId(), "invalid_key_id");
         clientWithRegion1 = new S3CompatStorageClient(credentialsProvider, TestConstants.REGION_1, TestConstants.ENDPOINT);
@@ -57,7 +56,6 @@ class S3CompatApiTest {
             updatePrefixForTestCase(op);
             clientWithRegion1.deleteObjects(TestConstants.BUCKET_AT_REGION_1, prefix);
         }
-        System.out.println("ALL Tests Pass!");
     }
     @Test
     void setRegion() {
@@ -78,8 +76,6 @@ class S3CompatApiTest {
         Assertions.assertEquals("US", clientWithRegion1.getBucketLocation(TestConstants.BUCKET_AT_REGION_2));
         Assertions.assertEquals("US", clientWithRegion2.getBucketLocation(TestConstants.BUCKET_AT_REGION_2));
         Assertions.assertEquals("US", clientWithNoRegionSpecified.getBucketLocation(TestConstants.BUCKET_AT_REGION_2));
-        // Test for public bucket
-        Assertions.assertEquals(TestConstants.REGION_1, clientWithNoCredentials.getBucketLocation(TestConstants.PUBLIC_BUCKET));
         // Negative test: bucket does not exist
         TestUtils.functionCallThrowsException(() -> clientWithNoRegionSpecified.getBucketLocation(TestConstants.NOT_EXISTING_BUCKET),
                 404 /* expectedStatusCode */,
