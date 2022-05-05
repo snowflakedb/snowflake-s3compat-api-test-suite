@@ -8,7 +8,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3VersionSummary;
-import com.snowflake.s3compatapitestsuite.util.TestConstants;
+import com.snowflake.s3compatapitestsuite.TestConstants;
 import com.snowflake.s3compatapitestsuite.util.TestUtils;
 import org.junit.jupiter.api.*;
 import java.io.*;

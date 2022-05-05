@@ -1,4 +1,4 @@
-package com.snowflake.s3compatapitestsuite.util;
+package com.snowflake.s3compatapitestsuite;
 
 import com.google.common.base.Strings;
 import com.snowflake.s3compatapitestsuite.options.CliOptions;
