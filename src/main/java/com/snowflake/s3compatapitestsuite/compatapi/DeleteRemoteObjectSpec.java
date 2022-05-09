@@ -30,7 +30,7 @@ public class DeleteRemoteObjectSpec {
      * @param fileName Name of the object to read. Corresponds to an S3 key.
      * @param remoteVersionId VersionId in order to request metadata about a specific version.
      */
-    DeleteRemoteObjectSpec(String fileName, @Nullable String remoteVersionId) {
+    public DeleteRemoteObjectSpec(String fileName, @Nullable String remoteVersionId) {
         if (fileName.trim().isEmpty()) {
             throw new IllegalArgumentException("fileName must not be null, empty, or all whitespace.");
         }

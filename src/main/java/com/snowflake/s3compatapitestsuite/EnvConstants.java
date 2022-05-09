@@ -5,7 +5,7 @@ import com.snowflake.s3compatapitestsuite.options.CliOptions;
 
 import java.util.Map;
 
-public class TestConstants {
+public class EnvConstants {
     /**
      * A non-existing bucket.
      */
@@ -17,15 +17,18 @@ public class TestConstants {
     /**
      * A local file for testing.
      */
-    public static final String LOCAL_FILE_PATH_1 = "src/resources/test1.txt";
+    public static final String LOCAL_FILE_PATH_1 = "src/main/resources/test1.txt";
     /**
      * A second local file for testing.
      */
-    public static final String LOCAL_FILE_PATH_2 = "src/resources/test2.json";
+    public static final String LOCAL_FILE_PATH_2 = "src/main/resources/test2.json";
     /**
      * A third file name for testing.
      */
-    public static final String LARGE_FILE_NAME = "src/resources/largeFile.txt";
+    public static final String LARGE_FILE_NAME = "src/main/resources/largeFile.txt";
+
+    /** A prefix under under bucket {@value  BUCKET_AT_REGION_1}*/
+    public static final String PERFSTAT_PREFIX = "test-suite/perfstat";
     /**
      * *************************************************************************************************
      * *********** Below values need to be filled from environment variable or system properties . *****

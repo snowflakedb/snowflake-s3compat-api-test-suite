@@ -23,7 +23,7 @@ Build from Source Code
 
 .. code-block:: bash
 
-    mvn install
+    mvn clean install -DskipTests
 
 Vriables needed for running tests
 =================================
@@ -50,11 +50,20 @@ mvn test -Dtest=S3CompatApiTest
 
 Test all Apis using cli variables
 ---------------------------------
-mvn test-Dtest=S3CompatApiTest -DREGION_1=us-east-1 --DREGION_1=us-west-2
+mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_1=us-west-2
 
 Test a specific api
 -------------------
-mvn test-Dtest=S3CompatApiTest#getBucketLocation test
+mvn test -Dtest=S3CompatApiTest#getBucketLocation
+
+Collect performance stats
+--------------------------
+mvn exec:java -Dexec.mainClass=com.snowflake.s3compatapitestsuite.perf.PerfStatsApp
+
+Visualize the performance stats
+-------------------------------
+java -jar target/dependency-jar/spf4j-ui-8.9.5.jar 
+(use above ui to open the generated .tsdb2 file)
 
 ## Private repositories
 We will make it public after implementation, security, legal review is done.
@@ -66,9 +75,7 @@ getBucketLocation
 getObject
 getObjectMetadata
 putObject
-listObjects
 listObjectsV2
-listNextBatchOfObjects
 listVersions
 deleteObject
 deleteObjects
