@@ -25,7 +25,7 @@ Build from Source Code
 
     mvn clean install -DskipTests
 
-Vriables needed for running tests
+Variables needed for running tests
 =================================
 ```
          [variables]                    [description]
@@ -40,19 +40,19 @@ Vriables needed for running tests
        PAGE_LISTING_TOTAL_SIZE    page listing total size
        PREFIX_FOR_PAGE_LISTING    the prefix for testing page listing
 ```
-The test suite accept envrionment variables or cli arguments.
+The test suite accept envrionment variables or CLI arguments.
 
 Usage
 =====
-Test all Apis using already setup evnrionment variables
+Test all APIs using already setup evnrionment variables
 ------------------------------------------------------
 mvn test -Dtest=S3CompatApiTest
 
-Test all Apis using cli variables
+Test all APIs using CLI variables
 ---------------------------------
 mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_1=us-west-2
 
-Test a specific api
+Test a specific API
 -------------------
 mvn test -Dtest=S3CompatApiTest#getBucketLocation
 
