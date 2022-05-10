@@ -15,13 +15,9 @@ Build from Source Code
 ----------------------
 1. Checkout source code from Github by running:
 
-.. code-block:: bash
-
-    git clone https://github.com/snowflakedb/snowflake-s3compat-api-test-suite.git
+    git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
 
 2. Build the test suite by running:
-
-.. code-block:: bash
 
     mvn clean install -DskipTests
 
@@ -62,8 +58,15 @@ mvn exec:java -Dexec.mainClass=com.snowflake.s3compatapitestsuite.perf.PerfStats
 
 Visualize the performance stats
 -------------------------------
-java -jar target/dependency-jar/spf4j-ui-8.9.5.jar 
+cd spf4jui/
+mvn install dependency:copy-dependencies -DskipTests
+java -jar spf4jui/target/dependency/spf4j-ui-8.9.5.jar 
 (use above ui to open the generated .tsdb2 file)
+
+generated perf data
+-------------------
+Perf data is generated and stored in .tsdb2 as binary;
+perf data is also stored in .txt file for other processing if necessary.
 
 ## Private repositories
 We will make it public after implementation, security, legal review is done.
