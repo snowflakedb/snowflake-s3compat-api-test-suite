@@ -6,7 +6,7 @@ package com.snowflake.s3compatapitestsuite.perf;
 public class PerfStatsApp {
     public static void main(String[] args) {
         Spf4jConfig.initialize();
-        new PerfMeasurement().startPerfMeasurement();
+        new PerfMeasurement().startPerfMeasurement(args);
         System.exit(0);
     }
 }
