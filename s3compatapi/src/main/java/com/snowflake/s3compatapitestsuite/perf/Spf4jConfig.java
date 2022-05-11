@@ -1,8 +1,6 @@
 package com.snowflake.s3compatapitestsuite.perf;
 
-import org.spf4j.annotations.RecorderSourceInstance;
 import org.spf4j.perf.MeasurementRecorder;
-import org.spf4j.perf.MeasurementRecorderSource;
 import org.spf4j.perf.impl.RecorderFactory;
 
 import java.io.File;

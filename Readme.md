@@ -1,9 +1,8 @@
-Snowflake S3Compat API Test Suite.
-**********************************
+## **Snowflake S3Compat API Test Suite.**
 
-This is a test suite for S3Compat API used in Snowflake.
+This test suite tests necessary s3compat API's and measure simple performance stats.
 
-For any issue please contact shannon.chen@snowflake.com
+For any issue please contact @github/sfc-gh-schen or shannon.chen@snowflake.com
 
 Prerequisites
 =============
@@ -14,12 +13,14 @@ Installation
 Build from Source Code 
 ----------------------
 1. Checkout source code from Github by running:
-
-    git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
+```bash
+git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
+```
 
 2. Build the test suite by running:
-
-    mvn clean install -DskipTests
+```bash
+mvn clean install -DskipTests
+```
 
 Variables needed for running tests
 =================================
@@ -36,36 +37,58 @@ Variables needed for running tests
        PAGE_LISTING_TOTAL_SIZE    page listing total size
        PREFIX_FOR_PAGE_LISTING    the prefix for testing page listing
 ```
-The test suite accept envrionment variables or CLI arguments.
+example to set  environment variables:
+```bash
+export REGION_1=<regtion_1_for_bucket_1>
+
+```
+
+The test suite accept environment variables or CLI arguments.
 
 Usage
 =====
-Test all APIs using already setup evnrionment variables
-------------------------------------------------------
-mvn test -Dtest=S3CompatApiTest
-
-Test all APIs using CLI variables
----------------------------------
-mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_1=us-west-2
+navigate to target folder
+-------------------------
+```bash
+cd s3compatapi
+``` 
 
 Test a specific API
 -------------------
+```bash
 mvn test -Dtest=S3CompatApiTest#getBucketLocation
+```
+
+Test all APIs using already setup evnvironment variables
+------------------------------------------------------
+```bash
+mvn test -Dtest=S3CompatApiTest
+```
+Note that run all tests may take more than 2 min as one putOjbect test is testing uploading file upto 5GB.
+
+Test all APIs using CLI variables (if evnvironment variables set setup yet)
+---------------------------------------------------------------------------
+```bash
+mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_1=us-west-2
+```
 
 Collect performance stats
 --------------------------
+```bash
 mvn exec:java -Dexec.mainClass=com.snowflake.s3compatapitestsuite.perf.PerfStatsApp
+```
 
 Visualize the performance stats
 -------------------------------
-cd spf4jui/
-mvn install dependency:copy-dependencies -DskipTests
-java -jar spf4jui/target/dependency/spf4j-ui-8.9.5.jar 
-(use above ui to open the generated .tsdb2 file)
-
-generated perf data
+(use below ui to open the generated .tsdb2 file)
+```bash
+java -jar ../spf4jui/target/dependency-jars/spf4j-ui-8.9.5.jar
+```
+ 
+The generated perf data
 -------------------
 Perf data is generated and stored in .tsdb2 as binary;
+
 perf data is also stored in .txt file for other processing if necessary.
 
 ## Private repositories
