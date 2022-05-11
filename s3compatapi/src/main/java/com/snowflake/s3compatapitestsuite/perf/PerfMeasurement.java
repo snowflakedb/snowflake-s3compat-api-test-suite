@@ -42,26 +42,36 @@ public class PerfMeasurement {
 
     /**
      * Start to collect performance stats.
+     * @param args Execution arguments passed from the CLI.
+     *             eg:
      */
-    public void startPerfMeasurement() {
-        String funcNames = System.getProperty("func");
-        String times = System.getProperty("times");
-        int timesInt = Integer.MAX_VALUE;
+    public void startPerfMeasurement(String[] args) {
+        if (args.length > 2) {
+            throw new IllegalArgumentException("Only accept one or two arguments, " +
+                    "format: -Dexec.args=\"getObject,putObject 5\" , first argument is a list of APIs separated by ',', " +
+                    "second argument is for times to run the API. The second argument is optional.");
+        }
+        String funcNames = null;
+        String times = null;
+        if (args.length > 0) {
+            funcNames = args[0];
+        }
+        if (args.length > 1) {
+            times = args[1];
+        }
+        int timesInt = default_times;
         if (!Strings.isNullOrEmpty(times)) {
             timesInt = Integer.parseInt(times);
         }
         if (timesInt < 0) {
             throw new IllegalArgumentException("Number of times to run a function should be > 0");
         }
-        if (timesInt == Integer.MAX_VALUE) {
-           timesInt = default_times;
-        }
         if (!Strings.isNullOrEmpty(funcNames)) {
             String[] funcs = funcNames.split(",");
             for (String funcName: funcs) {
-                FUNC_NAME func = FUNC_NAME.lookupByName(funcName);
+                FUNC_NAME func = FUNC_NAME.lookupByName(funcName.trim());
                 if (func == null) {
-                    throw new IllegalArgumentException("Func Name" + funcNames + " not supported.");
+                    throw new IllegalArgumentException(errorMessageForArguments(funcName));
                 }
                 measureOneFunc(func, timesInt);
             }
@@ -69,6 +79,16 @@ public class PerfMeasurement {
             collectPerfStats(timesInt);
         }
         tearDown();
+    }
+
+    private String errorMessageForArguments(String funcName) {
+        StringBuilder sb = new StringBuilder();
+        for (FUNC_NAME value : FUNC_NAME.values()) {
+            sb.append(value.getName()).append(" ");
+        }
+        sb.append(". \n");
+        sb.append("Example of CLI arguments: -Dexec.args=\"getObject,putObject 5\"");
+        return String.format("Function name %s not supported. Supported arguments are: %s", funcName, sb);
     }
 
     private void setup() {
@@ -244,31 +264,37 @@ public class PerfMeasurement {
     }
 
     public enum FUNC_NAME {
-        GET_BUCKET_LOCATION,
-        GET_OBJECT,
-        GET_OBJECT_METADATA,
-        PUT_OBJECT,
-        PUT_LARGE_OBJECT,
-        LIST_OBJECTS,
-        LIST_OBJECTS_V2,
-        PAGE_LISTING,
-        LIST_VERSIONS,
-        DELETE_OBJECT,
-        DELETE_OBJECTS,
-        COPY_OBJECT,
-        SET_REGION,
-        GENERATE_PRESIGNED_URL;
+        GET_BUCKET_LOCATION("getBucketLocation"),
+        GET_OBJECT("getObject"),
+        GET_OBJECT_METADATA("getObjectMetadata"),
+        PUT_OBJECT("putObject"),
+        LIST_OBJECTS("listObject"),
+        LIST_OBJECTS_V2("listObjectV2"),
+        LIST_VERSIONS("listVersions"),
+        DELETE_OBJECT("deleteObject"),
+        DELETE_OBJECTS("deleteObjects"),
+        COPY_OBJECT("copyObject"),
+        SET_REGION("setRegion"),
+        GENERATE_PRESIGNED_URL("generatePresignedUrl");
 
+        private String name;
+
+        FUNC_NAME(String name) {
+            this.name = name;
+        }
         public static FUNC_NAME lookupByName (String func) {
             if (func == null) {
                 return null;
             }
             for (FUNC_NAME func_name : FUNC_NAME.values()) {
-                if (func_name.name().equalsIgnoreCase(func)) {
+                if (func_name.getName().equalsIgnoreCase(func)) {
                     return func_name;
                 }
             }
             return null;
+        }
+        public String getName() {
+            return this.name;
         }
     }
 }
