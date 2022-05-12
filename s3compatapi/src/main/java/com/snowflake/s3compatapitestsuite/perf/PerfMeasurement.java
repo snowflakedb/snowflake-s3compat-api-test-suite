@@ -8,6 +8,10 @@ import com.google.common.base.Strings;
 import com.snowflake.s3compatapitestsuite.EnvConstants;
 import com.snowflake.s3compatapitestsuite.compatapi.DeleteRemoteObjectSpec;
 import com.snowflake.s3compatapitestsuite.compatapi.S3CompatStorageClient;
+import com.snowflake.s3compatapitestsuite.options.CliParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.spf4j.perf.MeasurementRecorder;
 
 import java.io.File;
@@ -46,18 +50,16 @@ public class PerfMeasurement {
      *             eg:
      */
     public void startPerfMeasurement(String[] args) {
-        if (args.length > 2) {
-            throw new IllegalArgumentException("Only accept one or two arguments, " +
-                    "format: -Dexec.args=\"getObject,putObject 5\" , first argument is a list of APIs separated by ',', " +
-                    "second argument is for times to run the API. The second argument is optional.");
-        }
+        Option apisOpt = new Option("a", "APIs", true, "A list of APIs for measure performance");
+        Option timesOpt = new Option("t", "times", true, "How many times to run each API");
+        CommandLine cml = parseArgs(new Options().addOption(apisOpt).addOption(timesOpt), args);
         String funcNames = null;
         String times = null;
-        if (args.length > 0) {
-            funcNames = args[0];
+        if (cml != null && cml.hasOption(apisOpt)) {
+            funcNames = cml.getOptionValue(apisOpt);
         }
-        if (args.length > 1) {
-            times = args[1];
+        if (cml != null && cml.hasOption(timesOpt)) {
+            times = cml.getOptionValue(timesOpt);
         }
         int timesInt = default_times;
         if (!Strings.isNullOrEmpty(times)) {
@@ -81,13 +83,18 @@ public class PerfMeasurement {
         tearDown();
     }
 
+    private CommandLine parseArgs(Options options, String[] args) {
+        CliParser parser = new CliParser(options);
+        return parser.parse(args);
+    }
+
     private String errorMessageForArguments(String funcName) {
         StringBuilder sb = new StringBuilder();
         for (FUNC_NAME value : FUNC_NAME.values()) {
             sb.append(value.getName()).append(" ");
         }
         sb.append(". \n");
-        sb.append("Example of CLI arguments: -Dexec.args=\"getObject,putObject 5\"");
+        sb.append("Example of CLI arguments: -a getObject,putObject -t 5");
         return String.format("Function name %s not supported. Supported arguments are: %s", funcName, sb);
     }
 
