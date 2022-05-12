@@ -76,11 +76,11 @@ Collect performance stats
 --------------------------
 collect perf stats by default: all API's run 20 times
 ```bash
-mvn exec:java -Dexec.mainClass=com.snowflake.s3compatapitestsuite.perf.PerfStatsApp
+java -jar target/java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar
 ```
 collect perf stats by passing arguments: arg1= a list of APIs separated by comma, arg2=times to run the API's.
 ```bash
-mvn exec:java -Dexec.mainClass=com.snowflake.s3compatapitestsuite.perf.PerfStatsApp -Dexec.args="getObject,putOjbect 10"
+java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar -a getObject,putOjbect -b 10
 ```
 Above command indicates to collect perf stats for 10 times of getObject and putOjbect.
 

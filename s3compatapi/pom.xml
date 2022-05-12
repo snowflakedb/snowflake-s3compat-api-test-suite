@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>snowflake-s3compat-api-tests</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>>snowflake-s3compat-api-tests</name>
     <packaging>jar</packaging>
 
@@ -17,6 +17,7 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <argumentA>java.base/jdk.internal.misc=ALL-UNNAMED</argumentA>
     </properties>
 
     <build>
@@ -34,6 +35,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>--add-exports</arg>
+                        <arg>${argumentA}</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -75,6 +82,17 @@
                             <classpathPrefix>dependency-jars/</classpathPrefix>
                         </manifest>
                     </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.snowflake.s3compatapitestsuite.perf.PerfStatsApp</mainClass>
+                    <arguments>
+                        <argument>--add-exports</argument>
+                        <argument>${argumentA}</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>
