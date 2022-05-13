@@ -99,8 +99,9 @@
                         <argument>${argumentA}</argument>
                         <argument>--add-opens</argument>
                         <argument>${argumentB}</argument>
-                        <argument>--illegal-access</argument>
-                        <argument>warn</argument>
+                        <argument>--add-opens</argument>
+                        <argument>${argumentC}</argument>
+                        <argument>--illegal-access=warn</argument>
                     </arguments>
                 </configuration>
             </plugin>
@@ -168,6 +169,17 @@
             <groupId>org.spf4j</groupId>
             <artifactId>spf4j-core</artifactId>
             <version>8.9.5</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.avro</groupId>
+                    <artifactId>avro</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

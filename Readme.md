@@ -19,7 +19,7 @@ git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
 
 2. Build the test suite by running:
 ```bash
-mvn clean install -DskipTests
+cd snowflake-s3compat-api-test-suite && mvn clean install -DskipTests
 ```
 
 Variables needed for running tests
