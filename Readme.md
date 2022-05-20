@@ -1,4 +1,4 @@
-## **Snowflake S3Compat API Test Suite.**
+## **Snowflake S3Compat API Test Suite**
 
 This test suite tests necessary s3compat API's and measure simple performance stats.
 
@@ -17,7 +17,20 @@ Build from Source Code
 git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
 ```
 
-2. Build the test suite by running:
+2. Build the test suite
+
+   The dependency spf4j-ui used in this repo has a fork build, GitHub Package requires authorized access for it. See [GitHub Maven registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
+
+   Add beloiw block to your ~/.m2/settings.xml file, A read-only token is sufficient.
+
+```
+<server>
+  <id>github</id>
+  <username>your github username</username>
+  <password>your github access token</password>
+</server>
+```
+   Build the test suite by running:
 ```bash
 cd snowflake-s3compat-api-test-suite && mvn clean install -DskipTests
 ```
@@ -90,15 +103,13 @@ Visualize the performance stats
 ```bash
 java -jar ../spf4jui/target/dependency-jars/spf4j-ui-8.9.5.jar
 ```
- 
+Open the .tsdb2 file, choose one of the API data generated, click Plot to see the charts.
+
 The generated perf data
 -------------------
 Perf data is generated and stored in .tsdb2 as binary;
 
 perf data is also stored in .txt file for other processing if necessary.
-
-## Private repositories
-We will make it public after implementation, security, legal review is done.
 
 ## List of S3Compat APIs
 Below is the list of APIs called in this repo:
@@ -109,10 +120,10 @@ getObjectMetadata
 putObject
 listObjectsV2
 listVersions
+listNextBatchOfVersions
 deleteObject
 deleteObjects
 copyObject
-setRegion
 generatePresignedUrl
 ```
 

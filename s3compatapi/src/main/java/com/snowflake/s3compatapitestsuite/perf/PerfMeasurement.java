@@ -147,7 +147,7 @@ public class PerfMeasurement {
             case PUT_OBJECT:
                 measurePutObject(times);
                 break;
-            case PUT_OBJECT_LARGE_SIZE:
+            case PUT_LARGE_SIZE_OBJECT:
                 putLargeSizeObject();
                 break;
             case LIST_OBJECTS_V2:
@@ -302,7 +302,7 @@ public class PerfMeasurement {
         GET_OBJECT("getObject"),
         GET_OBJECT_METADATA("getObjectMetadata"),
         PUT_OBJECT("putObject"),
-        PUT_OBJECT_LARGE_SIZE("putLargeSizeObject"),
+        PUT_LARGE_SIZE_OBJECT("putLargeSizeObject"),
         LIST_OBJECTS("listObject"),
         LIST_OBJECTS_V2("listObjectV2"),
         LIST_VERSIONS("listVersions"),
