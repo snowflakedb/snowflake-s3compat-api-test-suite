@@ -35,7 +35,7 @@ import java.util.TreeMap;
 public class S3CompatStorageClient implements StorageClient {
     private static final Logger logger = LogManager.getLogger(S3CompatStorageClient.class);
     final AmazonS3 s3Client;
-    private static final int CLIENT_TIMEOUT_FOR_READ = 300_000; // in MS
+    private static final int TIME_OUT = 300_000; // in MS
     private static final String ENCODING = "UTF-8";
     /** Configurable value to use for the max error retry configuration when creating an S3 client. */
     private static final int MAX_ERROR_RETRY = 5;
@@ -62,7 +62,7 @@ public class S3CompatStorageClient implements StorageClient {
         ClientConfiguration clientCfg = new ClientConfiguration();
         clientCfg.withSignerOverride("AWSS3V4SignerType");
         clientCfg.setMaxErrorRetry(MAX_ERROR_RETRY);
-        clientCfg.withSocketTimeout(300_000);
+        clientCfg.withSocketTimeout(TIME_OUT);
         clientCfg.withTcpKeepAlive(true);
         AmazonS3 s3Client = new AmazonS3Client(awsCredentialsProvide, clientCfg);
         s3Client.setEndpoint(endpoint);
@@ -110,8 +110,8 @@ public class S3CompatStorageClient implements StorageClient {
             if (start != null && end != null) {
                 request.setRange(start, end);
             }
-            if (CLIENT_TIMEOUT_FOR_READ > 0) {
-                request.setSdkClientExecutionTimeout(CLIENT_TIMEOUT_FOR_READ);
+            if (TIME_OUT > 0) {
+                request.setSdkClientExecutionTimeout(TIME_OUT);
             }
             if (measurementPerfomance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.GET_OBJECT);
