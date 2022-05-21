@@ -407,7 +407,7 @@ class S3CompatApiTest {
             Assertions.fail("Unexpected failure for using presigned url: " + e);
         }
         // Expired presigned url
-        testForbiddenPresignedUrl(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, filePath, 0 /* expiryTime */);
+        testForbiddenPresignedUrl(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, filePath, 1 /* expiryTime */);
         // Url presigned with invalid key id
         testForbiddenPresignedUrl(clientWithInvalidKeyId, EnvConstants.BUCKET_AT_REGION_1, filePath, null /* expiryTime */);
         // Url presigned with invalid secret key
@@ -420,8 +420,8 @@ class S3CompatApiTest {
                 forbiddenUrlStr = generatePresignedUrl(client, bucketName, filePath);
             } else {
                 forbiddenUrlStr = client.generatePresignedUrl(bucketName, filePath, expiryTime, null /* contentType*/);
+                TimeUnit.SECONDS.sleep(expiryTime + 2);
             }
-            TimeUnit.MILLISECONDS.sleep(500);
             URL expiredUrl = new URL(forbiddenUrlStr);
             HttpURLConnection c = (HttpURLConnection) expiredUrl.openConnection();
             Assertions.assertEquals(403, c.getResponseCode());
