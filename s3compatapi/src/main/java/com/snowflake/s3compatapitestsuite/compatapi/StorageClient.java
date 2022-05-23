@@ -22,7 +22,7 @@ public interface StorageClient {
      * @param key The key in the specified bucket under which the object is stored.
      * @return The object.
      */
-    S3Object getObject(String bucketName, String key);
+    S3CompatObject getObject(String bucketName, String key);
     /**
      * Get the object by providing bucket name and key.
      * @param bucketName The name of the bucket containing the desired object
@@ -46,17 +46,10 @@ public interface StorageClient {
      */
     PutObjectResult putObject(WriteObjectSpec writeObjectSpec);
     /**
-     * List all objects with given bucket name and prefix.
-     * @param bucketName Name of the bucket.
-     * @param prefix An optional parameter restricting the response to keys beginning with the specified prefix.
-     * @return a list of summary information about the objects in the specified bucket.
-     */
-    List<S3ObjectSummary> listObjects(String bucketName, String prefix);
-    /**
      * List objects V2 by providing bucket name and prefix of the object.
      * @param bucketName Name of the bucket
-     * @param prefix An optional parameter restricting the response to keys beginning with the specified prefix.
-     * @param maxKeys
+     * @param prefix A parameter restricting the response to keys beginning with the specified prefix.
+     * @param maxKeys The optional parameter indicating the maximum number of keys to include in the response
      * @return list of objects summaries.
      */
     List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix, @Nullable Integer maxKeys) ;
@@ -66,9 +59,10 @@ public interface StorageClient {
      * @param bucketName Bucket name to read the object in the remote storage platform from.
      * @param key The key in the specified bucket under which the object is stored.
      * @param useUrlEncoding If true, set URL encoding for S3 requests.
+     * @param maxKey The optional parameter indicating the maximum number of keys to include in the response.
      * @return list of versions
      */
-    List<S3VersionSummary> listVersions(String bucketName, String key, boolean useUrlEncoding) ;
+    List<S3VersionSummary> listVersions(String bucketName, String key, boolean useUrlEncoding, @Nullable Integer maxKey) ;
     /**
      * Deletes the specified object in the specified bucket.
      * @param bucketName Name of the bucket that contains the object to delete.
