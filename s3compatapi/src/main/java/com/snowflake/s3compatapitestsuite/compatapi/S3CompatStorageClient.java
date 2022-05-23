@@ -40,7 +40,7 @@ public class S3CompatStorageClient implements StorageClient {
     /** Configurable value to use for the max error retry configuration when creating an S3 client. */
     private static final int MAX_ERROR_RETRY = 5;
 
-    private boolean measurementPerfomance = false;
+    private boolean measurementPerformance = false;
 
     private PerfMeasurementRecorder perfMeasurement;
     /**
@@ -76,11 +76,11 @@ public class S3CompatStorageClient implements StorageClient {
     public String getBucketLocation(String bucketName) {
         String regionRes;
         try {
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.GET_BUCKET_LOCATION);
             }
             regionRes = this.s3Client.getBucketLocation(bucketName);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_BUCKET_LOCATION);
             }
         } catch (AmazonS3Exception ex) {
@@ -113,11 +113,11 @@ public class S3CompatStorageClient implements StorageClient {
             if (TIME_OUT > 0) {
                 request.setSdkClientExecutionTimeout(TIME_OUT);
             }
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.GET_OBJECT);
             }
             res = this.s3Client.getObject(request);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_OBJECT);
             }
             return new S3CompatObject(res);
@@ -139,11 +139,11 @@ public class S3CompatStorageClient implements StorageClient {
         if (versionId != null ) {
             objectMetadataRequest.setVersionId(versionId);
         }
-        if (measurementPerfomance && perfMeasurement != null) {
+        if (measurementPerformance && perfMeasurement != null) {
             perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.GET_OBJECT_METADATA);
         }
         RemoteObjectMetadata res = RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
-        if (measurementPerfomance && perfMeasurement != null) {
+        if (measurementPerformance && perfMeasurement != null) {
             perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_OBJECT_METADATA);
         }
         return res;
@@ -177,11 +177,11 @@ public class S3CompatStorageClient implements StorageClient {
             if (writeObjectSpec.getClientTimeoutInMs() != null && writeObjectSpec.getClientTimeoutInMs() > 0) {
                 request.setSdkClientExecutionTimeout(writeObjectSpec.getClientTimeoutInMs());
             }
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.PUT_OBJECT);
             }
             PutObjectResult putResult = this.s3Client.putObject(request);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.PUT_OBJECT);
             }
             RemoteObjectMetadata objectMetadata = getObjectMetadata(writeObjectSpec.getBucketName(), writeObjectSpec.getFilePath(), putResult.getVersionId());
@@ -201,8 +201,10 @@ public class S3CompatStorageClient implements StorageClient {
         }
         throw new RuntimeException("Fail to putObject:" + writeObjectSpec.getFilePath());
     }
-    @Override
-    public List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix, @Nullable Integer maxKeys) {
+    public List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix, @Nullable Integer maxKeys, PerfMeasurement.FUNC_NAME funcName) {
+        if (!(funcName == PerfMeasurement.FUNC_NAME.LIST_OBJECTS_V2 || funcName == PerfMeasurement.FUNC_NAME.LIST_LARGE_NUM_OBJECTS)) {
+            throw new IllegalArgumentException("Only LIST_OBJECT_V2 or LIST_LARGE_NUM_OBJECTS allowed, illegal param: " + funcName.name());
+        }
         ListObjectsV2Request listV2Req = new ListObjectsV2Request();
         listV2Req = listV2Req.withBucketName(bucketName);
         listV2Req = listV2Req.withPrefix(prefix);
@@ -210,8 +212,8 @@ public class S3CompatStorageClient implements StorageClient {
             listV2Req.withMaxKeys(maxKeys);
         }
         try {
-            if (measurementPerfomance && perfMeasurement != null) {
-                perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.LIST_OBJECTS_V2);
+            if (measurementPerformance && perfMeasurement != null) {
+                perfMeasurement.startTiming(funcName);
             }
             ListObjectsV2Result listV2Res = this.s3Client.listObjectsV2(listV2Req);
             List<S3ObjectSummary> s3ObjectSummaries = fromV2ObjectListing(listV2Res, listV2Req);
@@ -219,13 +221,17 @@ public class S3CompatStorageClient implements StorageClient {
                 listV2Res = this.s3Client.listObjectsV2(listV2Req);
                 s3ObjectSummaries.addAll(fromV2ObjectListing(listV2Res, listV2Req));
             }
-            if (measurementPerfomance && perfMeasurement != null) {
-                perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.LIST_OBJECTS_V2);
+            if (measurementPerformance && perfMeasurement != null) {
+                perfMeasurement.recordElapsedTime(funcName);
             }
             return s3ObjectSummaries;
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
         }
+    }
+    @Override
+    public List<S3ObjectSummary> listObjectsV2(String bucketName, String prefix, @Nullable Integer maxKeys) {
+        return listObjectsV2(bucketName, prefix, maxKeys, PerfMeasurement.FUNC_NAME.LIST_OBJECTS_V2);
     }
     private @NotNull List<S3ObjectSummary> fromV2ObjectListing(@NotNull ListObjectsV2Result listRes,
                                                                @NotNull ListObjectsV2Request listReq)
@@ -265,7 +271,7 @@ public class S3CompatStorageClient implements StorageClient {
             if (maxKey != null) {
                 listVersionsReq.withMaxResults(maxKey);
             }
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.LIST_VERSIONS);
             }
             VersionListing vl = this.s3Client.listVersions(listVersionsReq);
@@ -274,7 +280,7 @@ public class S3CompatStorageClient implements StorageClient {
                 vl = this.s3Client.listNextBatchOfVersions(vl);
                 versionSum.addAll(fromListVersions(vl));
             }
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.LIST_VERSIONS);
             }
         } catch (UnsupportedEncodingException e) {
@@ -310,11 +316,11 @@ public class S3CompatStorageClient implements StorageClient {
     @Override
     public void deleteObject(String bucketName, String fileKey) {
         try {
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.DELETE_OBJECT);
             }
             this.s3Client.deleteObject(bucketName, fileKey);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.DELETE_OBJECT);
             }
         } catch (AmazonS3Exception ex) {
@@ -346,11 +352,11 @@ public class S3CompatStorageClient implements StorageClient {
         try {
             DeleteObjectsRequest dor = new DeleteObjectsRequest(bucketName);
             dor.setKeys(kvList);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.DELETE_OBJECTS);
             }
             DeleteObjectsResult result = this.s3Client.deleteObjects(dor);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.DELETE_OBJECTS);
             }
             return result.getDeletedObjects().size();
@@ -367,11 +373,11 @@ public class S3CompatStorageClient implements StorageClient {
             cpReq = new CopyObjectRequest(sourceBucket, sourceKey, dstBucket, destKey);
         }
         try {
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.COPY_OBJECT);
             }
             this.s3Client.copyObject(cpReq);
-            if (measurementPerfomance && perfMeasurement != null) {
+            if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.COPY_OBJECT);
             }
         } catch (AmazonS3Exception ex) {
@@ -398,16 +404,9 @@ public class S3CompatStorageClient implements StorageClient {
         }
         return pg.generate();
     }
-    /**
-     * Get the region name for the client.
-     * @return The name of the region.
-     */
-    public String getRegionName() {
-        return this.s3Client.getRegionName();
-    }
 
-    public void setMeasurementPerfomance(boolean measurementPerfomance) {
-        this.measurementPerfomance = measurementPerfomance;
+    public void setMeasurementPerformance(boolean measurementPerformance) {
+        this.measurementPerformance = measurementPerformance;
     }
 
     public void setPerfMeasurement(PerfMeasurement.FUNC_NAME funcName) {

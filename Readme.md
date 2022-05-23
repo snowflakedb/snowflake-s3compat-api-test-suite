@@ -47,8 +47,8 @@ Variables needed for running tests
        S3COMPAT_SECRET_KEY        Secret key to used to authenticate the request to above both buckets.
        END_POINT                  end point for the test suite
        NOT_ACCESSIBLE_BUCKET      a bucket that is not accessible by the provided keys, in REGION_1
-       PAGE_LISTING_TOTAL_SIZE    page listing total size
-       PREFIX_FOR_PAGE_LISTING    the prefix for testing page listing
+       PREFIX_FOR_PAGE_LISTING    the prefix for testing listing large num of objects, at REGION_1, it needs to have over 1000 objects 
+       PAGE_LISTING_TOTAL_SIZE    the total size of objects on the above prefix: PREFIX_FOR_PAGE_LISTING
 ```
 example to set  environment variables:
 ```bash
@@ -82,14 +82,14 @@ Note that run all tests may take more than 2 min as one putOjbect test is testin
 Test all APIs using CLI variables (if evnvironment variables set setup yet)
 ---------------------------------------------------------------------------
 ```bash
-mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_1=us-west-2
+mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_2=us-west-2
 ```
 
 Collect performance stats
 --------------------------
 collect perf stats by default: all API's run 20 times
 ```bash
-java -jar target/java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar
+java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar
 ```
 collect perf stats by passing arguments: arg1= a list of APIs separated by comma, arg2=times to run the API's.
 ```bash

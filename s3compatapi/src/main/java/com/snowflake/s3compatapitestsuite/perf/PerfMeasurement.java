@@ -111,11 +111,11 @@ public class PerfMeasurement {
         // put files in order for testing
         putObjectResult1 = clientWithRegion1.putObject(bucketName, prefix + '/' + EnvConstants.LOCAL_FILE_PATH_1 , EnvConstants.LOCAL_FILE_PATH_1);
         putObjectResult2 = clientWithRegion1.putObject(bucketName, prefix + '/' + EnvConstants.LOCAL_FILE_PATH_2, EnvConstants.LOCAL_FILE_PATH_2);
-        clientWithRegion1.setMeasurementPerfomance(true);
+        clientWithRegion1.setMeasurementPerformance(true);
     }
 
     private static void tearDown() {
-        clientWithRegion1.setMeasurementPerfomance(false);
+        clientWithRegion1.setMeasurementPerformance(false);
         try {
             // cleanup all versions
             List<DeleteRemoteObjectSpec> toDeleteList = new ArrayList<>();
@@ -154,6 +154,9 @@ public class PerfMeasurement {
             case LIST_OBJECTS:
                 measureListObjects(times);
                 break;
+            case LIST_LARGE_NUM_OBJECTS:
+                measureListLargeNumObjects(times);
+                break;
             case LIST_VERSIONS:
                 measureListVersions(times);
                 break;
@@ -177,6 +180,7 @@ public class PerfMeasurement {
         measurePutObject(times);
         measureCopyObject(times);
         measureListObjects(times);
+        measureListLargeNumObjects(times);
        // putObjectWithLargeSize();
         measureListVersions(times);
         measureDeleteObject(times);
@@ -221,7 +225,14 @@ public class PerfMeasurement {
         String testPrefix = prefix + "/listObjectsV2";
         uploadFilesForTesting(times, testPrefix);
         for (int i = 0; i < times; i++) {
-            clientWithRegion1.listObjectsV2(bucketName, prefix, null /* maxKeys */);
+            clientWithRegion1.listObjectsV2(bucketName, testPrefix, null /* maxKeys */);
+        }
+    }
+    private void measureListLargeNumObjects(int times) {
+        clientWithRegion1.setPerfMeasurement(FUNC_NAME.LIST_LARGE_NUM_OBJECTS);
+        String testPrefix = EnvConstants.PREFIX_FOR_PAGE_LISTING_AT_REG_1;
+        for (int i = 0; i < times; i++) {
+            clientWithRegion1.listObjectsV2(bucketName, testPrefix, null, FUNC_NAME.LIST_LARGE_NUM_OBJECTS);
         }
     }
     private void putLargeSizeObject() {
@@ -287,13 +298,13 @@ public class PerfMeasurement {
         clientWithRegion1.deleteObjects(bucketName, toDelete);
     }
     private List<PutObjectResult> uploadFilesForTesting(int numFilesToUpload, String testPrefix) {
-        clientWithRegion1.setMeasurementPerfomance(false);
+        clientWithRegion1.setMeasurementPerformance(false);
         List<PutObjectResult> res = new ArrayList<>();
         for (int i = 0; i < numFilesToUpload; i++) {
             String remoteFileName = testPrefix + "/tempfile_" + i;
             res.add(clientWithRegion1.putObject(bucketName,remoteFileName,  EnvConstants.LOCAL_FILE_PATH_1));
         }
-        clientWithRegion1.setMeasurementPerfomance(true);
+        clientWithRegion1.setMeasurementPerformance(true);
         return res;
     }
 
@@ -305,6 +316,7 @@ public class PerfMeasurement {
         PUT_LARGE_SIZE_OBJECT("putLargeSizeObject"),
         LIST_OBJECTS("listObject"),
         LIST_OBJECTS_V2("listObjectV2"),
+        LIST_LARGE_NUM_OBJECTS("listLargeNumObjects"),
         LIST_VERSIONS("listVersions"),
         DELETE_OBJECT("deleteObject"),
         DELETE_OBJECTS("deleteObjects"),
