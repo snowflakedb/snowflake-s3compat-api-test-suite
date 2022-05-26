@@ -25,4 +25,4 @@ Please answer these questions before submitting your pull requests. Thanks!
 
 ## Pre-review checklist
 - [ ] This change has passed precommit
-- [ ] I have reviewed code coverage report for my P
+- [ ] I have code coverage for my PR
