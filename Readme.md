@@ -1,8 +1,6 @@
 ## **Snowflake S3Compat API Test Suite**
 
-This test suite tests necessary s3compat API's and measure simple performance stats.
-
-For any issue please contact @github/sfc-gh-schen or shannon.chen@snowflake.com
+This test suite tests necessary s3compat APIs and measure simple performance stats.
 
 Prerequisites
 =============
@@ -21,7 +19,7 @@ git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
 
    The dependency spf4j-ui used in this repo has a fork build, GitHub Package requires authorized access for it. See [GitHub Maven registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
 
-   Add beloiw block to your ~/.m2/settings.xml file, A read-only token is sufficient.
+   Add below block to your ~/.m2/settings.xml file, A read-only token is sufficient.
 
 ```
 <server>
@@ -39,20 +37,19 @@ Variables needed for running tests
 =================================
 ```
          [variables]                    [description]
-       REGION_1                   region for the first bucket, us-east-1
-       REGION_2                   region for the second bucket, us-west-2
-       BUCKET_NAME_1              the first bucket name for testing, locate at REGION_1
-       BUCKET_NAME_2              the second bucket name for testing, locate at REGION_2
-       S3COMPAT_ACCESS_KEY        Access key to used to authenticate the request to above both buckets.
-       S3COMPAT_SECRET_KEY        Secret key to used to authenticate the request to above both buckets.
-       END_POINT                  end point for the test suite
-       NOT_ACCESSIBLE_BUCKET      a bucket that is not accessible by the provided keys, in REGION_1
-       PREFIX_FOR_PAGE_LISTING    the prefix for testing listing large num of objects, at REGION_1, it needs to have over 1000 objects 
-       PAGE_LISTING_TOTAL_SIZE    the total size of objects on the above prefix: PREFIX_FOR_PAGE_LISTING
+       BUCKET_NAME_1              The bucket name for testing, locate at REGION_1.
+       REGION_1                   Region for the above bucket, like us-east-1.
+       REGION_2                   Region that is different than REGION_1, like us-west-2.
+       S3COMPAT_ACCESS_KEY        Access key to used to acess to the above bucket.
+       S3COMPAT_SECRET_KEY        Secret key to used to access to the above bucket.
+       END_POINT                  End point that can route operations to the provided bucket.
+       NOT_ACCESSIBLE_BUCKET      A bucket that is not accessible by the provided keys, at REGION_1.
+       PREFIX_FOR_PAGE_LISTING    The prefix for testing listing large num of objects, at BUCKET_NAME_1, it needs to have over 1000 objects. 
+       PAGE_LISTING_TOTAL_SIZE    The total size of objects on the above prefix: PREFIX_FOR_PAGE_LISTING.
 ```
-example to set  environment variables:
+example to set environment variables:
 ```bash
-export REGION_1=<regtion_1_for_bucket_1>
+export REGION_1=<region_1_for_bucket_1>
 
 ```
 
@@ -61,41 +58,41 @@ The test suite accept environment variables or CLI arguments.
 Usage
 =====
 navigate to target folder
--------------------------
 ```bash
 cd s3compatapi
 ``` 
 
-Test a specific API
+Test APIs
 -------------------
+Test a specific API, eg: test getBucketLocation
 ```bash
 mvn test -Dtest=S3CompatApiTest#getBucketLocation
 ```
-
-Test all APIs using already setup evnvironment variables
-------------------------------------------------------
+Test all APIs using already setup environment variables
 ```bash
 mvn test -Dtest=S3CompatApiTest
 ```
-Note that run all tests may take more than 2 min as one putOjbect test is testing uploading file upto 5GB.
+Note that run all tests may take more than 2 min as one putObject test is testing uploading file upto 5GB.
 
-Test all APIs using CLI variables (if evnvironment variables set setup yet)
----------------------------------------------------------------------------
+Test using CLI variables (if environment variables not set setup yet)
 ```bash
-mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_2=us-west-2
+mvn test -Dtest=S3CompatApiTest -DREGION_1=us-east-1 -DREGION_2=us-west-2 -D...
+mvn test -Dtest=S3CompatApiTest#getObject -DREGION_1=us-east-1 -DREGION_2=us-west-2 -D...
 ```
 
 Collect performance stats
 --------------------------
-collect perf stats by default: all API's run 20 times
+Collect perf stats by default: all APIs run 20 times
 ```bash
 java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar
 ```
-collect perf stats by passing arguments: arg1= a list of APIs separated by comma, arg2=times to run the API's.
+Collect perf stats by passing arguments: 
+
+-a: list of APIs separated by comma; -t: how times to run the APIs.
 ```bash
-java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar -a getObject,putOjbect -b 10
+java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar -a getObject,putOjbect -t 10
 ```
-Above command indicates to collect perf stats for 10 times of getObject and putOjbect.
+Above command indicates to collect perf stats for 10 times of getObject and putObject.
 
 Visualize the performance stats
 -------------------------------
@@ -105,11 +102,9 @@ java -jar ../spf4jui/target/dependency-jars/spf4j-ui-8.9.5.jar
 ```
 Open the .tsdb2 file, choose one of the API data generated, click Plot to see the charts.
 
-The generated perf data
--------------------
 Perf data is generated and stored in .tsdb2 as binary;
 
-perf data is also stored in .txt file for other processing if necessary.
+Perf data is also stored in .txt file for other processing if necessary.
 
 ## List of S3Compat APIs
 Below is the list of APIs called in this repo:
@@ -126,5 +121,7 @@ deleteObjects
 copyObject
 generatePresignedUrl
 ```
+## Support
+Feel free to file an issue or submit a PR here for general cases. For official support, contact Snowflake support at: https://community.snowflake.com/s/article/How-To-Submit-a-Support-Case-in-Snowflake-Lodge
 
 

@@ -47,7 +47,6 @@ public class CliOptions {
         END_POINT(new Option("END_POINT", true, "end point for the test suite")),
         BUCKET_1(new Option("BUCKET_NAME_1", true, "the first bucket name for testing, locate at region1")),
         REGION_1(new Option("REGION_1", true, "region for the first bucket")),
-        BUCKET_2(new Option("BUCKET_NAME_2", true, "the second bucket name for testing, locate at region2")),
         REGION_2(new Option("REGION_2", true, "region for the second bucket")),
         BUCKET_EXISTS_BUT_NOT_ACCESSIBLE (new Option("NOT_ACCESSIBLE_BUCKET", true, "a bucket that is not accessible by the provided keys, in region1")),
         PREFIX_FOR_PAGE_LISTING(new Option("PREFIX_FOR_PAGE_LISTING", true, "the prefix for testing page listing")),

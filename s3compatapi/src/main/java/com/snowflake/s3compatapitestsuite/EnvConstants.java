@@ -33,16 +33,15 @@ public class EnvConstants {
      * *************************************************************************************************
      * *********** Below values need to be filled from environment variable or system properties . *****
      *    [variables]                    [description]
-     *  REGION_1                   region for the first bucket
-     *  REGION_2                   region for the second bucket
-     *  BUCKET_NAME_1              the first bucket name for testing, locate at region1
-     *  BUCKET_NAME_2              the second bucket name for testing, locate at region2
-     *  END_POINT                  end point for the test suite
-     *  NOT_ACCESSIBLE_BUCKET      a bucket that is not accessible by the provided keys, in region1
-     *  PAGE_LISTING_TOTAL_SIZE    page listing total size
-     *  PREFIX_FOR_PAGE_LISTING    the prefix for testing page listing
-     *  S3COMPAT_ACCESS_KEY        Access key to used to authenticate the request.
-     *  S3COMPAT_SECRET_KEY        Secret key to used to authenticate the request.
+     *  REGION_1                   Region for the first bucket, like us-east-1.
+     *  REGION_2                   Region that is different than REGION_1, like us-west-2.
+     *  BUCKET_NAME_1              The bucket name, locate at REGION_1.
+     *  END_POINT                  End point that can route to the provided bucket.
+     *  NOT_ACCESSIBLE_BUCKET      A bucket that is not accessible by the provided keys, at REGION_1.
+     *  PAGE_LISTING_TOTAL_SIZE    The total size of objects on the above prefix: PREFIX_FOR_PAGE_LISTING.
+     *  PREFIX_FOR_PAGE_LISTING    The prefix for testing listing large num of objects, at BUCKET_NAME_1, it needs to have over 1000 objects.
+     *  S3COMPAT_ACCESS_KEY        Access key to used to authenticate the request to above bucket.
+     *  S3COMPAT_SECRET_KEY        Secret key to used to authenticate the request to above bucket.
      * *************************************************************************************************
      */
     /**
@@ -69,10 +68,6 @@ public class EnvConstants {
      * Secret key for {@value BUCKET_AT_REGION_1}
      */
     public static String SECRET_KEY = "";
-    /**
-     * A bucket locates at region {@value  REGION_2}. The bucket corresponds to S3 bucket.
-     */
-    public static String BUCKET_AT_REGION_2 = "";
     /**
      * A bucket locates at region {@value  REGION_1} but the provided credentials do not have access to.
      */
@@ -102,7 +97,6 @@ public class EnvConstants {
         BUCKET_AT_REGION_1 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.BUCKET_1, options);
         ACCESS_KEY = getConstantValue(CliOptions.S3COMPAT_OPTIONS.S3COMPAT_ACCESS_KEY, options);
         SECRET_KEY = getConstantValue(CliOptions.S3COMPAT_OPTIONS.S3COMPAT_SECRET_KEY, options);
-        BUCKET_AT_REGION_2 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.BUCKET_2, options);
         BUCKET_EXISTS_BUT_NOT_ACCESSIBLE = getConstantValue(CliOptions.S3COMPAT_OPTIONS.BUCKET_EXISTS_BUT_NOT_ACCESSIBLE, options);
         PREFIX_FOR_PAGE_LISTING_AT_REG_1 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.PREFIX_FOR_PAGE_LISTING, options);
         PAGE_LISTING_TOTAL_SIZE = Integer.parseInt(getConstantValue(CliOptions.S3COMPAT_OPTIONS.PAGE_LISTING_TOTAL_SIZE, options));
