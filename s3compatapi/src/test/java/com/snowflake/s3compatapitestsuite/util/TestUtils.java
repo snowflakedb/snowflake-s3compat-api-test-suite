@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2022 Snowflake Computing Inc. All right reserved.
+/**
+ * Copyright (c) 2022 Snowflake Inc. All rights reserved.
  */
 package com.snowflake.s3compatapitestsuite.util;
 

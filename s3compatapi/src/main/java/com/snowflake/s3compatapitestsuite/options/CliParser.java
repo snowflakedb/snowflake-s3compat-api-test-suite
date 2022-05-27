@@ -1,3 +1,6 @@
+/**
+ * Copyright (c) 2022 Snowflake Inc. All rights reserved.
+ */
 package com.snowflake.s3compatapitestsuite.options;
 
 import org.apache.commons.cli.*;
