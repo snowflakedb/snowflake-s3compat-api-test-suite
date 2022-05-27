@@ -310,9 +310,8 @@ class S3CompatApiTest {
             Assertions.assertEquals(v1.getETag(), v2.getETag());
             Assertions.assertEquals(v1.getSize(), v2.getSize());
         }
-        listNextBatchOfVersions();
     }
-
+    @Test
     void listNextBatchOfVersions() throws IOException {
         updatePrefixForTestCase(TestUtils.OPERATIONS.LIST_VERSIONS);
         // upload same file multiple times, to generate different versions
