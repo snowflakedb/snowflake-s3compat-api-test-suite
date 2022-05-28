@@ -90,7 +90,7 @@ Collect perf stats by passing arguments:
 
 -a: list of APIs separated by comma; -t: how times to run the APIs.
 ```bash
-java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar -a getObject,putOjbect -t 10
+java -jar target/snowflake-s3compat-api-tests-1.0-SNAPSHOT.jar -a getObject,putObject -t 10
 ```
 Above command indicates to collect perf stats for 10 times of getObject and putObject.
 
