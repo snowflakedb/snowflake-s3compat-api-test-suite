@@ -65,10 +65,10 @@ public class S3CompatStorageClient implements StorageClient {
         clientCfg.withSocketTimeout(TIME_OUT);
         clientCfg.withTcpKeepAlive(true);
         AmazonS3 s3Client = new AmazonS3Client(awsCredentialsProvide, clientCfg);
-        s3Client.setEndpoint(endpoint);
         if (region != null) {
             s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
         }
+        s3Client.setEndpoint(endpoint);
         s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(false).build());
         return s3Client;
     }
