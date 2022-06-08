@@ -83,6 +83,11 @@ public class S3CompatStorageClient implements StorageClient {
             if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_BUCKET_LOCATION);
             }
+            if ("US".equals(regionRes)) {
+                // For backward compatibility reasons, AWS returns "US" for the standard region in
+                // us-east-1.
+                regionRes = "us-east-1";
+            }
         } catch (AmazonS3Exception ex) {
             if (ex.getAdditionalDetails() != null) {
                 String correctRegion = ex.getAdditionalDetails().get("Region");
