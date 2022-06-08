@@ -37,7 +37,7 @@ Variables needed for running tests
 =================================
 ```
          [variables]                    [description]
-       BUCKET_NAME_1              The bucket name for testing, locate at REGION_1.
+       BUCKET_NAME_1              The bucket name for testing, locate at REGION_1, expect versioning enabled.
        REGION_1                   Region for the above bucket, like us-east-1.
        REGION_2                   Region that is different than REGION_1, like us-west-2.
        S3COMPAT_ACCESS_KEY        Access key to used to acess to the above bucket.

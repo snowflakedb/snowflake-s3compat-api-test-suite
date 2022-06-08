@@ -65,10 +65,10 @@ public class S3CompatStorageClient implements StorageClient {
         clientCfg.withSocketTimeout(TIME_OUT);
         clientCfg.withTcpKeepAlive(true);
         AmazonS3 s3Client = new AmazonS3Client(awsCredentialsProvide, clientCfg);
-        s3Client.setEndpoint(endpoint);
         if (region != null) {
             s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
         }
+        s3Client.setEndpoint(endpoint);
         s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(false).build());
         return s3Client;
     }
@@ -82,6 +82,11 @@ public class S3CompatStorageClient implements StorageClient {
             regionRes = this.s3Client.getBucketLocation(bucketName);
             if (measurementPerformance && perfMeasurement != null) {
                 perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_BUCKET_LOCATION);
+            }
+            if ("US".equals(regionRes)) {
+                // For backward compatibility reasons, AWS returns "US" for the standard region in
+                // us-east-1.
+                regionRes = "us-east-1";
             }
         } catch (AmazonS3Exception ex) {
             if (ex.getAdditionalDetails() != null) {
