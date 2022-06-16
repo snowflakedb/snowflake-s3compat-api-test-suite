@@ -26,10 +26,10 @@ public class TestUtils {
             // Assertions.assertEquals(expectedMsg, ex.getErrorMessage());
             return;
         } catch (Exception ex) {
-            Assertions.fail("Expected an exception: " + ex);
+            Assertions.fail("Expected an AmazonS3Exception, but get " + ex);
         }
         // Should be un-reachable
-        throw new Exception("Unreachable code reached");
+        throw new Exception("Expect an AmazonS3Exception, but not exception caught.");
     }
 
     /**
@@ -43,6 +43,7 @@ public class TestUtils {
         LIST_OBJECTS,
         LIST_OBJECTS_V2,
         LIST_VERSIONS,
+        LIST_NEXT_BATCH_OF_VERSIONS,
         DELETE_OBJECT,
         DELETE_OBJECTS,
         COPY_OBJECT,
