@@ -9,10 +9,7 @@ import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.snowflake.s3compatapitestsuite.EnvConstants;
 import com.snowflake.s3compatapitestsuite.util.TestUtils;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -41,8 +38,8 @@ class S3CompatApiTest {
     private static AWSCredentialsProvider credentialsProvider;
     /** A prefix will be updated for each test. */
     private static String prefix = "";
-    @BeforeAll
-    public static void setupBase() throws RuntimeException{
+    @BeforeEach
+    public void setupBase() throws RuntimeException{
        // BasicConfigurator.configure();
         EnvConstants.setUpParameterValues();
         credentialsProvider = new AWSStaticCredentialsProvider(new BasicAWSCredentials(EnvConstants.ACCESS_KEY, EnvConstants.SECRET_KEY));
@@ -120,14 +117,6 @@ class S3CompatApiTest {
                 400 /* expectedStatusCode */,
                 "InvalidBucketName" /* expectedErrorCode */,
                 "The specified bucket is not valid.");
-
-        // Set the region back for later testing
-        clientWithRegion1.setRegion(EnvConstants.REGION_1);
-        clientWithRegion2.setRegion(EnvConstants.REGION_2);
-        clientWithNoCredentials.setRegion(EnvConstants.REGION_1);
-        clientWithInvalidKeyId.setRegion(EnvConstants.REGION_1);
-        clientWithInvalidSecret.setRegion(EnvConstants.REGION_1);
-        clientWithNoRegionSpecified = new S3CompatStorageClient(credentialsProvider, null, EnvConstants.ENDPOINT);
     }
     @Test
     void putObject() throws Exception {
@@ -138,11 +127,6 @@ class S3CompatApiTest {
         testPutObjectWithUserMetadata();
         // Positive test: put a file with up to size of 5GB
         testPutLargeObjectUpTo5GB();
-        // Negative test: put object on a wrong region bucket
-        TestUtils.functionCallThrowsException(() -> clientWithRegion2.putObject(EnvConstants.BUCKET_AT_REGION_1, prefix, EnvConstants.LOCAL_FILE_PATH_1),
-                400 /* expectedStatusCode */,
-                "AuthorizationHeaderMalformed" /* expectedErrorCode */ ,
-                String.format("The authorization header is malformed; the region '%s' is wrong; expecting '%s'" /* expectedErrorMsg */,EnvConstants.REGION_2, EnvConstants.REGION_1 ));
         // Negative test: put object on a non-existing bucket
         TestUtils.functionCallThrowsException(() -> clientWithRegion2.putObject(EnvConstants.NOT_EXISTING_BUCKET, prefix, EnvConstants.LOCAL_FILE_PATH_1),
                 404 /* expectedStatusCode */,
@@ -219,17 +203,12 @@ class S3CompatApiTest {
                 404 /* expectedStatusCode */,
                 "NoSuchKey" /* expectedErrorCode */,
                 "The specified key does not exist." /* expectedErrorMsg */);
-        // Negative test: get a file at a wrong region
-        TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObject(EnvConstants.BUCKET_AT_REGION_1, filePath),
-                400 /* expectedStatusCode */,
-                "AuthorizationHeaderMalformed" /* expectedErrorCode */,
-                String.format("The authorization header is malformed; the region '%s' is wrong; expecting '%s'" /* expectedRegionFromExceptionMsg */, EnvConstants.REGION_2, EnvConstants.BUCKET_AT_REGION_1));
         // Negative test: get a file without providing credential.
         TestUtils.functionCallThrowsException(() -> clientWithNoCredentials.getObject(EnvConstants.BUCKET_AT_REGION_1, filePath),
                 403 /* expectedStatusCode */,
                 "AccessDenied" /* expectedErrorCode */,
                 "Access Denied");
-        // Negative test: get a file an existing but not accessible bucket.
+        // Negative test: get a file at an existing but not accessible bucket.
         TestUtils.functionCallThrowsException(() -> clientWithRegion1.getObject(EnvConstants.BUCKET_EXISTS_BUT_NOT_ACCESSIBLE, filePath),
                 403 /* expectedStatusCode */,
                 "AccessDenied" /* expectedErrorCode */,
@@ -250,7 +229,7 @@ class S3CompatApiTest {
         // Test getObjectMetadata by provide a version id
         RemoteObjectMetadata mt2 = clientWithRegion1.getObjectMetadata(EnvConstants.BUCKET_AT_REGION_1, filePath, putObjectResult1.getVersionId());
         Assertions.assertEquals(putObjectResult1.getVersionId(), mt2.getObjectVersionId());
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(1000);
         // Put the file to the remote location will generate a new version id
         PutObjectResult putObjectResult2 = uploadAnObjectToTestingLocation(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, EnvConstants.LOCAL_FILE_PATH_1);
         RemoteObjectMetadata mt3 = getObjectMetadata(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, filePath);
@@ -330,16 +309,17 @@ class S3CompatApiTest {
         }
         // set max result of list request to 2
         List<S3VersionSummary> summaries =  clientWithRegion1.listVersions(EnvConstants.BUCKET_AT_REGION_1, prefix + '/' + EnvConstants.LOCAL_FILE_PATH_2, true /* useUrlEncoding */, /* maxKey */ 2);
-        Assertions.assertEquals(summaries.size(), numVersions);
+        Assertions.assertEquals(numVersions, summaries.size());
     }
     @Test
     void deleteObject() throws IOException {
         updatePrefixForTestCase(TestUtils.OPERATIONS.DELETE_OBJECT);
         // Upload a file to make sure to delete the target.
         uploadAnObjectToTestingLocation(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, EnvConstants.LOCAL_FILE_PATH_1);
-        Assertions.assertEquals(1, clientWithRegion1.listObjectsV2(EnvConstants.BUCKET_AT_REGION_1, prefix, null /* maxKeys */).size());
-        clientWithRegion1.deleteObject(EnvConstants.BUCKET_AT_REGION_1, prefix + "/" + EnvConstants.LOCAL_FILE_PATH_1);
-        Assertions.assertTrue(clientWithRegion1.listObjectsV2(EnvConstants.BUCKET_AT_REGION_1, prefix, null /* maxKeys */).isEmpty());
+        String key = prefix + "/" + EnvConstants.LOCAL_FILE_PATH_1;
+        Assertions.assertEquals(1, clientWithRegion1.listObjectsV2(EnvConstants.BUCKET_AT_REGION_1, key, null /* maxKeys */).size());
+        clientWithRegion1.deleteObject(EnvConstants.BUCKET_AT_REGION_1, key);
+        Assertions.assertTrue(clientWithRegion1.listObjectsV2(EnvConstants.BUCKET_AT_REGION_1, key, null /* maxKeys */).isEmpty());
     }
     @Test
     void deleteObjects() throws Exception {
@@ -438,7 +418,7 @@ class S3CompatApiTest {
         return client.generatePresignedUrl(bucketName, key, -1 /* expiryTime */, null /* contentType */);
     }
     private static void updatePrefixForTestCase(TestUtils.OPERATIONS operation) {
-        prefix = EnvConstants.PREFIX_FOR_BUCKET_AT_REG_1 + "/" + operation;
+        prefix = EnvConstants.PREFIX_FOR_BUCKET_AT_REG_1 + "/" + operation + "_TEST";
     }
     /**
      * Upload a file to a remote location with prefix {@value prefix} under a bucket, the prefix is updated for each test.

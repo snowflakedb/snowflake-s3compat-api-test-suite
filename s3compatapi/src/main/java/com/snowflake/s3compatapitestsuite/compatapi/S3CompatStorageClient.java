@@ -8,8 +8,6 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.*;
 import com.snowflake.s3compatapitestsuite.perf.PerfMeasurement;
@@ -34,7 +32,7 @@ import java.util.TreeMap;
  */
 public class S3CompatStorageClient implements StorageClient {
     private static final Logger logger = LogManager.getLogger(S3CompatStorageClient.class);
-    final AmazonS3 s3Client;
+    final InstrumentedAmazonS3Client s3Client;
     private static final int TIME_OUT = 300_000; // in MS
     private static final String ENCODING = "UTF-8";
     /** Configurable value to use for the max error retry configuration when creating an S3 client. */
@@ -55,7 +53,7 @@ public class S3CompatStorageClient implements StorageClient {
             String endpoint) {
         this.s3Client = createS3Client(region, awsCredentialsProvider, endpoint);
     }
-    private AmazonS3 createS3Client(
+    private InstrumentedAmazonS3Client createS3Client(
             final @Nullable String region,
             final @Nullable AWSCredentialsProvider awsCredentialsProvide,
             final String endpoint) {
@@ -64,11 +62,18 @@ public class S3CompatStorageClient implements StorageClient {
         clientCfg.setMaxErrorRetry(MAX_ERROR_RETRY);
         clientCfg.withSocketTimeout(TIME_OUT);
         clientCfg.withTcpKeepAlive(true);
-        AmazonS3 s3Client = new AmazonS3Client(awsCredentialsProvide, clientCfg);
+        InstrumentedAmazonS3Client s3Client;
+        if (awsCredentialsProvide == null) {
+            s3Client = new InstrumentedAmazonS3Client(null, clientCfg);
+        } else {
+            s3Client = new InstrumentedAmazonS3Client(awsCredentialsProvide.getCredentials(), clientCfg);
+        }
         if (region != null) {
-            s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
+            s3Client.setSignerRegionOverride(region);
+            s3Client.withRegion(Region.getRegion(Regions.fromName(region)));
         }
         s3Client.setEndpoint(endpoint);
+        // explicitly force using virtual style access for S3
         s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(false).build());
         return s3Client;
     }
@@ -92,6 +97,7 @@ public class S3CompatStorageClient implements StorageClient {
             if (ex.getAdditionalDetails() != null) {
                 String correctRegion = ex.getAdditionalDetails().get("Region");
                 if (correctRegion != null) {
+                    this.s3Client.setSignerRegionOverride(correctRegion);
                     this.s3Client.setRegion(Region.getRegion(Regions.fromName(correctRegion)));
                     return this.s3Client.getBucketLocation(bucketName);
                 }
