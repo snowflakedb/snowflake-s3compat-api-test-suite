@@ -127,12 +127,6 @@ class S3CompatApiTest {
         testPutObjectWithUserMetadata();
         // Positive test: put a file with up to size of 5GB
         testPutLargeObjectUpTo5GB();
-        // This test is not necessary, as we internally will get the correct region from getBucketLocation()
-//        // Negative test: put object on a wrong region bucket
-//        TestUtils.functionCallThrowsException(() -> clientWithRegion2.putObject(EnvConstants.BUCKET_AT_REGION_1, prefix, EnvConstants.LOCAL_FILE_PATH_1),
-//                400 /* expectedStatusCode */,
-//                "AuthorizationHeaderMalformed" /* expectedErrorCode */ ,
-//                String.format("The authorization header is malformed; the region '%s' is wrong; expecting '%s'" /* expectedErrorMsg */,EnvConstants.REGION_2, EnvConstants.REGION_1 ));
         // Negative test: put object on a non-existing bucket
         TestUtils.functionCallThrowsException(() -> clientWithRegion2.putObject(EnvConstants.NOT_EXISTING_BUCKET, prefix, EnvConstants.LOCAL_FILE_PATH_1),
                 404 /* expectedStatusCode */,
@@ -209,12 +203,6 @@ class S3CompatApiTest {
                 404 /* expectedStatusCode */,
                 "NoSuchKey" /* expectedErrorCode */,
                 "The specified key does not exist." /* expectedErrorMsg */);
-        // This test is not necessary, as we internally will retry to get the correct region
-//        // Negative test: get a file at a wrong region
-//        TestUtils.functionCallThrowsException(() -> clientWithRegion2.getObject(EnvConstants.BUCKET_AT_REGION_1, filePath),
-//                400 /* expectedStatusCode */,
-//                "AuthorizationHeaderMalformed" /* expectedErrorCode */,
-//                String.format("The authorization header is malformed; the region '%s' is wrong; expecting '%s'" /* expectedRegionFromExceptionMsg */, EnvConstants.REGION_2, EnvConstants.BUCKET_AT_REGION_1));
         // Negative test: get a file without providing credential.
         TestUtils.functionCallThrowsException(() -> clientWithNoCredentials.getObject(EnvConstants.BUCKET_AT_REGION_1, filePath),
                 403 /* expectedStatusCode */,

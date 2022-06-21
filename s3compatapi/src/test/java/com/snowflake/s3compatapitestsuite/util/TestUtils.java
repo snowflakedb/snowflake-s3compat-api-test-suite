@@ -26,10 +26,10 @@ public class TestUtils {
             // Assertions.assertEquals(expectedMsg, ex.getErrorMessage());
             return;
         } catch (Exception ex) {
-            Assertions.fail("Expected an AmazonS3Exception, but get " + ex);
+            Assertions.fail("Expected an AmazonS3Exception, but got " + ex);
         }
         // Should be un-reachable
-        throw new Exception("Expect an AmazonS3Exception, but not exception caught.");
+        throw new Exception("Expected an AmazonS3Exception, but no exception caught.");
     }
 
     /**
