@@ -6,8 +6,7 @@ package com.snowflake.s3compatapitestsuite.compatapi;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
+import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.*;
 import com.snowflake.s3compatapitestsuite.perf.PerfMeasurement;
@@ -70,7 +69,7 @@ public class S3CompatStorageClient implements StorageClient {
         }
         if (region != null) {
             s3Client.setSignerRegionOverride(region);
-            s3Client.withRegion(Region.getRegion(Regions.fromName(region)));
+            s3Client.withRegion(RegionUtils.getRegion(region));
         }
         s3Client.setEndpoint(endpoint);
         // explicitly force using virtual style access for S3
@@ -98,7 +97,7 @@ public class S3CompatStorageClient implements StorageClient {
                 String correctRegion = ex.getAdditionalDetails().get("Region");
                 if (correctRegion != null) {
                     this.s3Client.setSignerRegionOverride(correctRegion);
-                    this.s3Client.setRegion(Region.getRegion(Regions.fromName(correctRegion)));
+                    this.s3Client.setRegion(RegionUtils.getRegion(correctRegion));
                     return this.s3Client.getBucketLocation(bucketName);
                 }
             }
@@ -398,7 +397,7 @@ public class S3CompatStorageClient implements StorageClient {
     @Override
     public void setRegion(@Nullable String region) {
          try {
-             this.s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
+             this.s3Client.setRegion(RegionUtils.getRegion(region));
          } catch (AmazonS3Exception ex) {
              throw ex;
          }
