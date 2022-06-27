@@ -21,7 +21,6 @@ public class TestUtils {
         } catch (AmazonS3Exception ex) {
             Assertions.assertEquals(expectedStatusCode, ex.getStatusCode());
             Assertions.assertEquals(expectedErrorCode, ex.getErrorCode());
-            Assertions.assertNotNull(ex.getRequestId());
             // error message does not need to exactly like aws response
             // Assertions.assertEquals(expectedMsg, ex.getErrorMessage());
             return;
