@@ -295,7 +295,8 @@ class S3CompatApiTest {
         updatePrefixForTestCase(TestUtils.OPERATIONS.LIST_VERSIONS);
         // upload same file multiple times, to generate different versions
         File file = new File(EnvConstants.LOCAL_FILE_PATH_2);
-        String filePath = prefix + "/" + EnvConstants.LOCAL_FILE_PATH_2;
+        // % is used to trigger url encoding.
+        String filePath = prefix + "/foo%_foo%/" + EnvConstants.LOCAL_FILE_PATH_2;
         WriteObjectSpec writeObjectSpec = new WriteObjectSpec(
                 EnvConstants.BUCKET_AT_REGION_1 /* bucketName*/,
                 filePath /* filePath */,
@@ -308,8 +309,18 @@ class S3CompatApiTest {
             clientWithRegion1.putObject(writeObjectSpec);
         }
         // set max result of list request to 2
-        List<S3VersionSummary> summaries =  clientWithRegion1.listVersions(EnvConstants.BUCKET_AT_REGION_1, prefix + '/' + EnvConstants.LOCAL_FILE_PATH_2, true /* useUrlEncoding */, /* maxKey */ 2);
+        List<S3VersionSummary> summaries =  clientWithRegion1.listVersions(EnvConstants.BUCKET_AT_REGION_1, filePath, true /* useUrlEncoding */, /* maxKey */ 2);
+        List<S3VersionSummary> summaries2 =  clientWithRegion1.listVersions(EnvConstants.BUCKET_AT_REGION_1, filePath, false /* useUrlEncoding */, /* maxKey */ 2);
         Assertions.assertEquals(numVersions, summaries.size());
+        Assertions.assertEquals(numVersions, summaries2.size());
+        for (int i = 0; i < numVersions; i++) {
+            S3VersionSummary v1 = summaries.get(i);
+            S3VersionSummary v2 = summaries2.get(i);
+            Assertions.assertEquals(v1.getKey(), v2.getKey());
+            Assertions.assertEquals(v1.getVersionId(), v2.getVersionId());
+            Assertions.assertEquals(v1.getETag(), v2.getETag());
+            Assertions.assertEquals(v1.getSize(), v2.getSize());
+        }
     }
     @Test
     void deleteObject() throws IOException {
