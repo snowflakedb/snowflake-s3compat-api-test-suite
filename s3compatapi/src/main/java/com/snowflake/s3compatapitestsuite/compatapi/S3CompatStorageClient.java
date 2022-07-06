@@ -315,6 +315,9 @@ public class S3CompatStorageClient implements StorageClient {
             for (S3VersionSummary version : s3Summaries) {
                 version.setKey(URLDecoder.decode(version.getKey(), ENCODING));
             }
+            if (prefix != null) {
+                vl.setPrefix(URLDecoder.decode(prefix, ENCODING));
+            }
             String urlEncodedNextKeyMarker = vl.getNextKeyMarker();
             if (null != urlEncodedNextKeyMarker) {
                 String decodedMarker = URLDecoder.decode(urlEncodedNextKeyMarker, ENCODING);
