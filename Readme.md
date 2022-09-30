@@ -121,6 +121,14 @@ deleteObjects
 copyObject
 generatePresignedUrl
 ```
+
+## Public documentation
+If all of your APIs pass the tests in this repo, please refer to our public documentations about using this feature on Snowflake deployments.
+
+[Working With Amazon S3-compatible Storage](https://docs.snowflake.com/en/LIMITEDACCESS/tables-external-s3-compatible.html)
+
+[Using On-Premises Data in Place with Snowflake](https://www.snowflake.com/blog/external-tables-on-prem/)
+
 ## Support
 Feel free to file an issue or submit a PR here for general cases. For official support, contact Snowflake support at: https://community.snowflake.com/s/article/How-To-Submit-a-Support-Case-in-Snowflake-Lodge
 
