@@ -131,12 +131,12 @@ If all of your APIs pass the tests in this repo, please refer to our public docu
 
 ## Troubleshooting
 We expect the storage vendors provide S3-compatible APIs, which should work like S3 APIs. We have observed there are still differences between storage vendors.
-Below are some troubleshooting cases. When your tests fail, please refer to the source code to see what are the test cases.
+Below are some troubleshooting tips. When your tests fail, please refer to the source code to see what are the test cases.
 1. getBucketLocation tests fail
-   We call getBucketLocation() to retrieve the region for a bucket, because the region is required for SigV4. If you confirm that your service ignore the bucket location (region) in the SigV4 from the request, then you can ignore the test failures for getBucketLocation.
+   We call getBucketLocation() to retrieve the region for a bucket, because the region is required for SigV4. If you confirm that your service ignores the bucket location (region) in the SigV4 from the request, then you can ignore the test failures for getBucketLocation.
 2. negative tests fail
-   For some negative test cases, AWS S3 returns 404 or 403, while your APIs return 400 or other error code, so your tests fails as the error code is different from what the tests expect.
-   It should be fine if your APIs return reasonable error codes and messages for those negative cases.
+   For some negative test cases, AWS S3 returns 404 or 403, while your APIs return 400 or other error codes, so your test fails as the error code is different from what the test case expects.
+   This should be fine as long as your APIs return reasonable error codes and messages for those negative cases.
 
 ## Support
 Feel free to file an issue or submit a PR here for general cases. For official support, contact Snowflake support at: https://community.snowflake.com/s/article/How-To-Submit-a-Support-Case-in-Snowflake-Lodge
