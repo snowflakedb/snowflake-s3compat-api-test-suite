@@ -19,7 +19,7 @@ git clone git@github.com:snowflakedb/snowflake-s3compat-api-test-suite.git
 
    The dependency spf4j-ui used in this repo has a fork build, GitHub Package requires authorized access for it. See [GitHub Maven registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry).
 
-   Add below block to your ~/.m2/settings.xml file, A read-only token is sufficient.
+   Add below block to your ~/.m2/settings.xml file, A scoped "read:packages" token is sufficient.
 
 ```
 <server>
@@ -114,8 +114,6 @@ getObject
 getObjectMetadata
 putObject
 listObjectsV2
-listVersions
-listNextBatchOfVersions
 deleteObject
 deleteObjects
 copyObject
@@ -133,8 +131,10 @@ If all of your APIs pass the tests in this repo, please refer to our public docu
 We expect the storage vendors provide S3-compatible APIs, which should work like S3 APIs. We have observed there are still differences between storage vendors.
 Below are some troubleshooting tips. When your tests fail, please refer to the source code to see what are the test cases.
 1. getBucketLocation tests fail
-   We call getBucketLocation() to retrieve the region for a bucket, because the region is required for SigV4. If you confirm that your service ignores the bucket location (region) in the SigV4 from the request, then you can ignore the test failures for getBucketLocation.
+
+   We call getObjectMetadata() for header "x-amz-bucket-region" to retrieve the region for a bucket, because the region is required for SigV4. If you confirm that your service ignores the bucket location (region) in the SigV4 from the request, then you can ignore the test failures for getBucketLocation. If your service requires SigV4, then your service should support getObjectMetadata() responded with "x-amz-bucket-region" header OR support getBucketLocation().
 2. negative tests fail
+
    For some negative test cases, AWS S3 returns 404 or 403, while your APIs return 400 or other error codes, so your test fails as the error code is different from what the test case expects.
    This should be fine as long as your APIs return reasonable error codes and messages for those negative cases.
 
