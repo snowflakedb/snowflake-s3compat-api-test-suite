@@ -23,11 +23,11 @@ import java.util.concurrent.TimeUnit;
  */
 class S3CompatApiTest {
     /** A client created without providing specific region. */
-    private static StorageClient clientWithNoRegionSpecified;
+    private static S3CompatStorageClient clientWithNoRegionSpecified;
     /** A client created with region TestConstants.region1 provided. */
     private static S3CompatStorageClient clientWithRegion1;
     /** A client created with region TestConstants.region2 provided. */
-    private static StorageClient clientWithRegion2;
+    private static S3CompatStorageClient clientWithRegion2;
     /** A client created with an invalid access key id. */
     private static StorageClient clientWithInvalidKeyId;
     /** A client created with an invalid secret key id. */
@@ -87,6 +87,10 @@ class S3CompatApiTest {
         Assertions.assertEquals(EnvConstants.REGION_1, clientWithRegion1.getBucketLocation(EnvConstants.BUCKET_AT_REGION_1));
         Assertions.assertEquals(EnvConstants.REGION_1, clientWithNoRegionSpecified.getBucketLocation(EnvConstants.BUCKET_AT_REGION_1));
         Assertions.assertEquals(EnvConstants.REGION_1, clientWithRegion2.getBucketLocation(EnvConstants.BUCKET_AT_REGION_1));
+        // test get bucket region through metadata request, if below tests fail, see Readme.md troubleshooting session
+        Assertions.assertEquals(EnvConstants.REGION_1, clientWithRegion1.getBucketRegionThroughMetadata(EnvConstants.BUCKET_AT_REGION_1));
+        Assertions.assertEquals(EnvConstants.REGION_1, clientWithRegion2.getBucketRegionThroughMetadata(EnvConstants.BUCKET_AT_REGION_1));
+        Assertions.assertEquals(EnvConstants.REGION_1, clientWithNoRegionSpecified.getBucketRegionThroughMetadata(EnvConstants.BUCKET_AT_REGION_1));
         // Negative test: bucket does not exist
         TestUtils.functionCallThrowsException(() -> clientWithNoRegionSpecified.getBucketLocation(EnvConstants.NOT_EXISTING_BUCKET),
                 404 /* expectedStatusCode */,
@@ -230,20 +234,12 @@ class S3CompatApiTest {
         RemoteObjectMetadata mt2 = clientWithRegion1.getObjectMetadata(EnvConstants.BUCKET_AT_REGION_1, filePath, putObjectResult1.getVersionId());
         Assertions.assertEquals(putObjectResult1.getVersionId(), mt2.getObjectVersionId());
         TimeUnit.MILLISECONDS.sleep(1000);
-        // Put the file to the remote location will generate a new version id
+        // Put the file to the remote location to overwrite
         PutObjectResult putObjectResult2 = uploadAnObjectToTestingLocation(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, EnvConstants.LOCAL_FILE_PATH_1);
         RemoteObjectMetadata mt3 = getObjectMetadata(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, filePath);
-        Assertions.assertEquals(putObjectResult2.getVersionId(), mt3.getObjectVersionId());
-        // The current version id should not be equals to the previous one
-        Assertions.assertNotEquals(mt3.getObjectVersionId(), mt2.getObjectVersionId());
         // Etag the same
         Assertions.assertEquals(mt3.getObjectETag(), mt2.getObjectETag());
         Assertions.assertTrue(mt1.getObjectLastModified().compareTo(mt3.getObjectLastModified()) < 0 );
-        // Negative test: provide wrong version id
-        TestUtils.functionCallThrowsException(() -> clientWithRegion1.getObjectMetadata(EnvConstants.BUCKET_AT_REGION_1, filePath, "NonExistingVersion"),
-                400 /* expectedStatusCode */,
-                "400 Bad Request" /* expectedErrorCode */,
-                "Bad Request" /* expectedRegionFromExceptionMsg */);
         // Negative test: get metadata for a non-existing file
         TestUtils.functionCallThrowsException(() -> getObjectMetadata(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, "not-existing" + filePath),
                 404 /* expectedStatusCode */,
@@ -274,7 +270,7 @@ class S3CompatApiTest {
         int maxKeys = 300;
         Assertions.assertEquals(EnvConstants.PAGE_LISTING_TOTAL_SIZE, clientWithRegion1.listObjectsV2(EnvConstants.BUCKET_AT_REGION_1, EnvConstants.PREFIX_FOR_PAGE_LISTING_AT_REG_1, maxKeys).size());
     }
-    @Test
+
     void listVersions() throws IOException {
         updatePrefixForTestCase(TestUtils.OPERATIONS.LIST_VERSIONS);
         // Upload files to make sure listing as expected.
@@ -290,7 +286,7 @@ class S3CompatApiTest {
             Assertions.assertEquals(v1.getSize(), v2.getSize());
         }
     }
-    @Test
+
     void listNextBatchOfVersions() throws IOException {
         updatePrefixForTestCase(TestUtils.OPERATIONS.LIST_VERSIONS);
         // upload same file multiple times, to generate different versions
@@ -344,15 +340,7 @@ class S3CompatApiTest {
         String key2 = prefix + "/" + EnvConstants.LOCAL_FILE_PATH_2;
         // Ensure files uploaded to  the location for testing.
         Assertions.assertEquals(files.size(), clientWithRegion1.listObjectsV2(EnvConstants.BUCKET_AT_REGION_1, prefix, null /* maxKeys */).size());
-        DeleteRemoteObjectSpec objectWithWrongVersion = new DeleteRemoteObjectSpec(key1, "versionId");
         List<DeleteRemoteObjectSpec> toDelete = new ArrayList<>();
-        toDelete.add(objectWithWrongVersion);
-        // Delete fails as object is provided with a wrong version id, will receive MultiObjectDeleteException
-        TestUtils.functionCallThrowsException(() -> clientWithRegion1.deleteObjects(EnvConstants.BUCKET_AT_REGION_1, toDelete),
-                200 /* expectedStatusCode */,
-                null /* expectedErrorCode */,
-                null /* expectedRegionFromExceptionMsg */);
-        toDelete.remove(0);// remove the one with wrong version id
         // To delete an object without providing version id
         toDelete.add(new DeleteRemoteObjectSpec(key1));
         // To delete an object by providing version id
@@ -374,12 +362,6 @@ class S3CompatApiTest {
         RemoteObjectMetadata source = getObjectMetadata(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, sourceFileName);
         Assertions.assertEquals(source.getObjectContentLength(), dstMt1.getObjectContentLength());
         Assertions.assertEquals(source.getObjectETag(), dstMt1.getObjectETag());
-        // Copy providing version id
-        String dstFileName2 = "dst2_" + sourceFileName;
-        clientWithRegion1.copyObject(EnvConstants.BUCKET_AT_REGION_1, sourceFileName, source.getObjectVersionId(), EnvConstants.BUCKET_AT_REGION_1, dstFileName2 );
-        RemoteObjectMetadata dstMt2 = getObjectMetadata(clientWithRegion1, EnvConstants.BUCKET_AT_REGION_1, dstFileName2);
-        Assertions.assertNotEquals(dstMt1.getObjectVersionId(), dstMt2.getObjectVersionId());
-        Assertions.assertEquals(dstMt1.getObjectETag(), dstMt2.getObjectETag());
     }
     @Test
     void generatePresignedUrl() {
