@@ -95,8 +95,8 @@ public class EnvConstants {
     public static void setUpParameterValues() {
         CliOptions options = new CliOptions();
         ENDPOINT = getConstantValue(CliOptions.S3COMPAT_OPTIONS.END_POINT, options);
-        REGION_1 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.REGION_1, options);
-        REGION_2 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.REGION_2, options);
+        REGION_1 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.REGION_1, options).toLowerCase();
+        REGION_2 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.REGION_2, options).toLowerCase();
         BUCKET_AT_REGION_1 = getConstantValue(CliOptions.S3COMPAT_OPTIONS.BUCKET_1, options);
         ACCESS_KEY = getConstantValue(CliOptions.S3COMPAT_OPTIONS.S3COMPAT_ACCESS_KEY, options);
         SECRET_KEY = getConstantValue(CliOptions.S3COMPAT_OPTIONS.S3COMPAT_SECRET_KEY, options);

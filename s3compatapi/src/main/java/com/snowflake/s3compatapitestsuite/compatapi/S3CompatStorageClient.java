@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -40,6 +41,7 @@ public class S3CompatStorageClient implements StorageClient {
     private boolean measurementPerformance = false;
 
     private PerfMeasurementRecorder perfMeasurement;
+    private static final String BUCKET_REGION_HEADER_NAME = "x-amz-bucket-region";
     /**
      * Constructor for a s3 compat storage client.
      * @param awsCredentialsProvider Wrapper for aws credential.
@@ -98,12 +100,27 @@ public class S3CompatStorageClient implements StorageClient {
                 if (correctRegion != null) {
                     this.s3Client.setSignerRegionOverride(correctRegion);
                     this.s3Client.setRegion(RegionUtils.getRegion(correctRegion));
-                    return this.s3Client.getBucketLocation(bucketName);
+                    return this.s3Client.getBucketLocation(bucketName).toLowerCase();
                 }
             }
             throw ex;
         }
-        return regionRes;
+        return regionRes.toLowerCase();
+    }
+    public String getBucketRegionThroughMetadata(String bucketName) {
+        GetObjectMetadataRequest objectMetadataRequest = new GetObjectMetadataRequest(bucketName, "");
+        if (measurementPerformance && perfMeasurement != null) {
+            perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.GET_OBJECT_METADATA);
+        }
+        RemoteObjectMetadata res = RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
+        Map<String, Object> rawMetadata = res.getS3FullMetadata().getRawMetadata();
+        if (rawMetadata != null && rawMetadata.get(BUCKET_REGION_HEADER_NAME) != null) {
+            return rawMetadata.get(BUCKET_REGION_HEADER_NAME).toString().toLowerCase();
+        }
+        if (measurementPerformance && perfMeasurement != null) {
+            perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_OBJECT_METADATA);
+        }
+        return null;
     }
     @Override
     public S3CompatObject getObject(String bucketName, String key) {
