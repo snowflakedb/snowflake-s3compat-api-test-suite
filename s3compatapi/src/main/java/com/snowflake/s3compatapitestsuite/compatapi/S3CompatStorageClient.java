@@ -100,7 +100,7 @@ public class S3CompatStorageClient implements StorageClient {
                 if (correctRegion != null) {
                     this.s3Client.setSignerRegionOverride(correctRegion);
                     this.s3Client.setRegion(RegionUtils.getRegion(correctRegion));
-                    return this.s3Client.getBucketLocation(bucketName).toLowerCase();
+                    return correctRegion.toLowerCase();
                 }
             }
             throw ex;
@@ -112,10 +112,22 @@ public class S3CompatStorageClient implements StorageClient {
         if (measurementPerformance && perfMeasurement != null) {
             perfMeasurement.startTiming(PerfMeasurement.FUNC_NAME.GET_OBJECT_METADATA);
         }
-        RemoteObjectMetadata res = RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
-        Map<String, Object> rawMetadata = res.getS3FullMetadata().getRawMetadata();
-        if (rawMetadata != null && rawMetadata.get(BUCKET_REGION_HEADER_NAME) != null) {
-            return rawMetadata.get(BUCKET_REGION_HEADER_NAME).toString().toLowerCase();
+        try {
+            RemoteObjectMetadata res = RemoteObjectMetadata.fromS3ObjectMetadata(this.s3Client.getObjectMetadata(objectMetadataRequest));
+            Map<String, Object> rawMetadata = res.getS3FullMetadata().getRawMetadata();
+            if (rawMetadata != null && rawMetadata.get(BUCKET_REGION_HEADER_NAME) != null) {
+                return rawMetadata.get(BUCKET_REGION_HEADER_NAME).toString().toLowerCase();
+            }
+        } catch (AmazonS3Exception ex) {
+            if (ex.getAdditionalDetails() != null) {
+                String correctRegion = ex.getAdditionalDetails().get("Region");
+                if (correctRegion != null) {
+                    this.s3Client.setSignerRegionOverride(correctRegion);
+                    this.s3Client.setRegion(RegionUtils.getRegion(correctRegion));
+                    return correctRegion.toLowerCase();
+                }
+            }
+            throw ex;
         }
         if (measurementPerformance && perfMeasurement != null) {
             perfMeasurement.recordElapsedTime(PerfMeasurement.FUNC_NAME.GET_OBJECT_METADATA);
