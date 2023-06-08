@@ -98,8 +98,6 @@ public class S3CompatStorageClient implements StorageClient {
             if (ex.getAdditionalDetails() != null) {
                 String correctRegion = ex.getAdditionalDetails().get("Region");
                 if (correctRegion != null) {
-                    this.s3Client.setSignerRegionOverride(correctRegion);
-                    this.s3Client.setRegion(RegionUtils.getRegion(correctRegion));
                     return correctRegion.toLowerCase();
                 }
             }
@@ -120,10 +118,8 @@ public class S3CompatStorageClient implements StorageClient {
             }
         } catch (AmazonS3Exception ex) {
             if (ex.getAdditionalDetails() != null) {
-                String correctRegion = ex.getAdditionalDetails().get("Region");
+                String correctRegion = ex.getAdditionalDetails().get(BUCKET_REGION_HEADER_NAME);
                 if (correctRegion != null) {
-                    this.s3Client.setSignerRegionOverride(correctRegion);
-                    this.s3Client.setRegion(RegionUtils.getRegion(correctRegion));
                     return correctRegion.toLowerCase();
                 }
             }
