@@ -123,7 +123,7 @@ generatePresignedUrl
 ## Public documentation
 If all of your APIs pass the tests in this repo, please refer to our public documentations about using this feature on Snowflake deployments.
 
-[Working With Amazon S3-compatible Storage](https://docs.snowflake.com/en/LIMITEDACCESS/tables-external-s3-compatible.html)
+[Working With Amazon S3-compatible Storage](https://docs.snowflake.com/en/user-guide/data-load-s3-compatible-storage)
 
 [Using On-Premises Data in Place with Snowflake](https://www.snowflake.com/blog/external-tables-on-prem/)
 
@@ -137,6 +137,18 @@ Below are some troubleshooting tips. When your tests fail, please refer to the s
 
    For some negative test cases, AWS S3 returns 404 or 403, while your APIs return 400 or other error codes, so your test fails as the error code is different from what the test case expects.
    This should be fine as long as your APIs return reasonable error codes and messages for those negative cases.
+
+3. After you finish the tests, please do verify your endpoint has a valid SSL certificate. Construct a host style URL in this format: https://<your_bucket>.<your_endpoint>, and then paste it in your browser, click the padlock icon in the address bar (left side), then click Connection or Certificate. 
+
+   If you have valid SSL certificate, you should see something like below indicating "Certificate is valid"
+
+   ![](s3compatapi/src/main/resources/validSSL.png)
+
+   If you do not have a valid SSL certificate, you will see something like "This site can’t be reached" or "Your connection to this site is not secure".
+   
+   ![](s3compatapi/src/main/resources/invalidSSL.png)
+
+   Please do make sure you have a valid SSL cert for your endpoint before you run any queries on Snowflake platform.
 
 ## Support
 Feel free to file an issue or submit a PR here for general cases. For official support, contact Snowflake support at: https://community.snowflake.com/s/article/How-To-Submit-a-Support-Case-in-Snowflake-Lodge
