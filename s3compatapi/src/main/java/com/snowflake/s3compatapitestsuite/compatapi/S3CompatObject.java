@@ -15,6 +15,7 @@ public class S3CompatObject {
     private String versionId;
     private String bucketName;
     private String key;
+    private String contentRange = null;
 
     /**
      * Constuctor for an S3CompatObject
@@ -27,6 +28,9 @@ public class S3CompatObject {
         this.versionId = s3Object.getObjectMetadata().getVersionId();
         this.bucketName = s3Object.getBucketName();
         this.key = s3Object.getKey();
+        if (s3Object.getObjectMetadata().getContentRange() != null) {
+            this.contentRange = s3Object.getObjectMetadata().getRawMetadataValue("Content-Range").toString();
+        }
     }
 
     public String getETag() {
@@ -47,5 +51,9 @@ public class S3CompatObject {
 
     public String getKey() {
         return key;
+    }
+
+    public String getContentRange() {
+        return contentRange;
     }
 }

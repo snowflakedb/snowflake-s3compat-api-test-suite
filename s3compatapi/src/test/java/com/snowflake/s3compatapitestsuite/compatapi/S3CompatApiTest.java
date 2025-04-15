@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.S3VersionSummary;
 import com.snowflake.s3compatapitestsuite.EnvConstants;
 import com.snowflake.s3compatapitestsuite.util.TestUtils;
 
+import org.apache.log4j.BasicConfigurator;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -204,8 +205,13 @@ class S3CompatApiTest {
         Assertions.assertEquals(EnvConstants.BUCKET_AT_REGION_1, object.getBucketName());
         Assertions.assertEquals(filePath, object.getKey());
         // Test getObject range
-        S3CompatObject object1 = clientWithRegion1.getObject(EnvConstants.BUCKET_AT_REGION_1, filePath, 0L, 8L);
-        Assertions.assertEquals(object1.getContentLength(), 9);
+        long start = 0;
+        long end = 8;
+        S3CompatObject object1 = clientWithRegion1.getObject(EnvConstants.BUCKET_AT_REGION_1, filePath, start, end);
+        Assertions.assertEquals(object1.getContentLength(), end - start + 1);
+        String contentRange = object1.getContentRange();
+        String expectedContentRange = String.format("bytes %d-%d/%d", start, end, file.length());
+        Assertions.assertEquals(expectedContentRange, contentRange, "Content range does not match, expected content range: " + expectedContentRange + ", but got: " + contentRange);
         // Negative test: get a file that does not exist
         TestUtils.functionCallThrowsException(() -> clientWithRegion1.getObject(EnvConstants.BUCKET_AT_REGION_1, "notExisting" + filePath),
                 404 /* expectedStatusCode */,

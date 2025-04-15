@@ -110,7 +110,7 @@ Perf data is also stored in .txt file for other processing if necessary.
 Below is the list of APIs called in this repo:
 ```
 getBucketLocation
-getObject
+getObject (include read with content range)
 getObjectMetadata
 putObject
 listObjectsV2
