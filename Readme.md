@@ -110,7 +110,7 @@ Perf data is also stored in .txt file for other processing if necessary.
 Below is the list of APIs called in this repo:
 ```
 getBucketLocation
-getObject
+getObject (include read with content range)
 getObjectMetadata
 putObject
 listObjectsV2
@@ -138,7 +138,10 @@ Below are some troubleshooting tips. When your tests fail, please refer to the s
    For some negative test cases, AWS S3 returns 404 or 403, while your APIs return 400 or other error codes, so your test fails as the error code is different from what the test case expects.
    This should be fine as long as your APIs return reasonable error codes and messages for those negative cases.
 
-3. After you finish the tests, please do verify your endpoint has a valid SSL certificate. Construct a host style URL in this format: https://<your_bucket>.<your_endpoint>, and then paste it in your browser, click the padlock icon in the address bar (left side), then click Connection or Certificate. 
+3. Content range response header
+
+   If a file size is 100, and we read the file with range between 10 and 19 (inclusive), a s3 expected get object with range response should have Content-Range header, and the format should be like "bytes 10-19/100". The last part should be 100 (the full file size) instead of part of the file size. If your service does not support this header, the test will fail. Please make sure your service supports this header with correct format.
+4. After you finish the tests, please do verify your endpoint has a valid SSL certificate. Construct a host style URL in this format: https://<your_bucket>.<your_endpoint>, and then paste it in your browser, click the padlock icon in the address bar (left side), then click Connection or Certificate. 
 
    If you have valid SSL certificate, you should see something like below indicating "Certificate is valid"
 
