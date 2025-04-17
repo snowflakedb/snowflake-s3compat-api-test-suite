@@ -127,6 +127,16 @@ If all of your APIs pass the tests in this repo, please refer to our public docu
 
 [Using On-Premises Data in Place with Snowflake](https://www.snowflake.com/blog/external-tables-on-prem/)
 
+## Docker
+In situations where no Java development environment is available, the test suite has been dockerized for ease of access. The container image can be built and ran using these commands (be sure to 
+haev the applicable m2 settings (check dist) and environment variables set (again, check dist):
+
+```
+DOCKER_BUILDKIT=1 docker build -t s3compat-api-test-suite --secret id=m2settings,src=/Users/username/.m2/settings.xml .
+docker run --rm -it --env-file ./.env s3compat-api-test-suite
+```
+
+
 ## Troubleshooting
 We expect the storage vendors provide S3-compatible APIs, which should work like S3 APIs. We have observed there are still differences between storage vendors.
 Below are some troubleshooting tips. When your tests fail, please refer to the source code to see what are the test cases.
